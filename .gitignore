@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.code-intel/cache/
+*.tgz
+.DS_Store
+coverage/
