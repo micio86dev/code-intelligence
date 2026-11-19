@@ -1,5 +1,6 @@
 import { parseArgs } from "node:util";
 import { renderDoctor, runDoctor } from "./commands/doctor.ts";
+import { renderImpact, runImpact } from "./commands/impact.ts";
 import { runInit } from "./commands/init.ts";
 import { runScan, type ScanReport } from "./commands/scan.ts";
 import { saveBaseline } from "./core/baseline.ts";
@@ -24,6 +25,7 @@ Usage: code-intel <command> [options]
 Commands:
   scan       Run engines on changed files (or the whole repo) and report findings
   baseline   Record current findings so later scans can report only new ones
+  impact     List the tests affected by your changes (uses codegraph when indexed)
   doctor     Check which engines are installed and whether the config is valid
   init       Create .code-intel.json in the current repository
 
@@ -54,6 +56,13 @@ Options:
       --timeout <ms>       Per-engine time limit (default depends on profile)
       --allow-missing      Do not treat a missing engine as an incomplete scan
       --no-cache           Do not read or write cached engine results
+`;
+
+const IMPACT_HELP = `Usage: code-intel impact [--changed | --staged | --since <ref>] [--json]
+
+Lists the test files affected by your changes. With a codegraph index (run \`codegraph init\` once)
+the answer follows the import graph transitively. Without one it falls back to a labelled
+heuristic (direct importers and name matches only). The index is synced before every query.
 `;
 
 const SHARED = {
@@ -114,7 +123,13 @@ export async function main(argv: string[], io: Io): Promise<number> {
     const v = parsed.values;
 
     if (v.help) {
-      io.stdout(command === "scan" || command === "baseline" ? SCAN_HELP : HELP);
+      io.stdout(
+        command === "scan" || command === "baseline"
+          ? SCAN_HELP
+          : command === "impact"
+            ? IMPACT_HELP
+            : HELP,
+      );
       return 0;
     }
     if (v.version) {
@@ -137,6 +152,27 @@ export async function main(argv: string[], io: Io): Promise<number> {
         const r = await runDoctor(io.cwd);
         io.stdout(v.json ? `${JSON.stringify(r, null, 2)}\n` : renderDoctor(r));
         return r.config.valid ? 0 : 2;
+      }
+      case "impact": {
+        const modes: TargetMode[] = [];
+        if (v.changed) modes.push("changed");
+        if (v.staged) modes.push("staged");
+        if (v.since !== undefined) modes.push("since");
+        if (v.all)
+          throw new UsageError(
+            "impact does not support --all; use --changed, --staged or --since <ref>",
+          );
+        if (modes.length > 1) throw new UsageError("Use only one of --changed, --staged, --since");
+        const r = await runImpact({
+          cwd: io.cwd,
+          mode: modes[0] ?? null,
+          ref: v.since ?? null,
+          log,
+        });
+        io.stdout(
+          v.json || v.format === "json" ? `${JSON.stringify(r, null, 2)}\n` : renderImpact(r),
+        );
+        return 0;
       }
       case "init": {
         const { created } = await runInit(io.cwd);

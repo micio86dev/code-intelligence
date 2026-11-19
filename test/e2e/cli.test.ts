@@ -283,3 +283,35 @@ test("registry rulesets and dependency audit (network)", { skip: OFFLINE }, () =
   assert.match(f.remediation, /Upgrade lodash to 4\.17\.21/);
   assert.equal(f.line, null);
 });
+
+test("trivy can be pinned for deps and reports fix guidance (network)", { skip: OFFLINE }, () => {
+  const lock = JSON.stringify({
+    name: "x",
+    version: "1.0.0",
+    lockfileVersion: 3,
+    requires: true,
+    packages: {
+      "": { name: "x", version: "1.0.0", dependencies: { lodash: "4.17.15" } },
+      "node_modules/lodash": {
+        version: "4.17.15",
+        resolved: "https://registry.npmjs.org/lodash/-/lodash-4.17.15.tgz",
+      },
+    },
+  });
+  const p = project({
+    "package.json": '{"name":"x","version":"1.0.0"}\n',
+    "package-lock.json": lock,
+  });
+  p.write("package-lock.json", `${lock}\n`);
+  const r = runCli(["scan", "--format", "json", "--engines", "trivy"], p.dir);
+  assert.equal(r.code, 1, r.stdout + r.stderr);
+  const j = JSON.parse(r.stdout);
+  assert.deepEqual(
+    j.engines.map((e: { engine: string }) => e.engine),
+    ["trivy"],
+  );
+  const f = j.findings.find((x: { ruleId: string }) => x.ruleId === "CVE-2020-8203");
+  assert.ok(f);
+  assert.match(f.remediation, /Upgrade lodash to 4\.17\.19/);
+  assert.equal(f.severity, "high");
+});
