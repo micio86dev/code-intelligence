@@ -108,12 +108,8 @@ export function validateConfig(raw: unknown): { config: Config; issues: Issue[] 
     const arr = strArray(raw.exclude, "exclude", issues);
     if (arr) {
       arr.forEach((g, i) => {
-        if (!isSafeGlob(g)) {
-          issues.push({
-            path: `exclude[${i}]`,
-            message: "must be relative and must not contain '..'",
-          });
-        }
+        const problem = globProblem(g);
+        if (problem) issues.push({ path: `exclude[${i}]`, message: problem });
       });
       cfg.exclude = [...DEFAULT_EXCLUDE, ...arr];
     }
