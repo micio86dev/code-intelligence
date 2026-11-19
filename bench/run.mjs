@@ -245,6 +245,7 @@ if (results.repos.express) {
       },
     }),
   );
+  git("add", "-f", "package-lock.json"); // express git-ignores lockfiles; force it into the change set
   const run = scan(dir, ["--no-cache"]);
   const j = parse(run);
   const has = (re, file) => j.findings.some((f) => re.test(f.ruleId) && (!file || f.file === file));
@@ -255,7 +256,14 @@ if (results.repos.express) {
       "lib/injected-sqli.js",
     ),
     "eval of request data": has(/eval/i, "lib/injected-sqli.js"),
-    "command injection via exec": has(/exec|command|child-process|shell/i, "lib/injected-sqli.js"),
+    "command injection, destructured require('child_process')": has(
+      /child-process|exec|command/i,
+      "lib/injected-exec-destructured.js",
+    ),
+    "command injection, inline require('child_process').exec": has(
+      /child-process|exec|command/i,
+      "lib/injected-exec-inline.js",
+    ),
     "vulnerable dependency (lodash 4.17.15)": has(/^GHSA-/, "package-lock.json"),
   };
   results.defectInjection = {

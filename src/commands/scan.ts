@@ -3,7 +3,12 @@ import { ResultCache } from "../core/cache.ts";
 import { type Config, loadConfig } from "../core/config.ts";
 import { UsageError } from "../core/errors.ts";
 import type { Logger } from "../core/logger.ts";
-import { filterToChangedLines, sortFindings, toFindings } from "../core/normalize.ts";
+import {
+  filterToChangedLines,
+  mergeDuplicateSecrets,
+  sortFindings,
+  toFindings,
+} from "../core/normalize.ts";
 import { plan } from "../core/planner.ts";
 import { runPlan } from "../core/runner.ts";
 import { findGitRoot, resolveTarget } from "../core/targets.ts";
@@ -98,6 +103,7 @@ export async function runScan(
   const { results, findings: raws } = await runPlan(entries, {
     root: target.root,
     config,
+    mode: target.mode,
     timeoutMs: opts.timeoutMs ?? profile.timeoutMs,
     cache: new ResultCache(target.root, opts.cache),
     log: opts.log,
@@ -112,7 +118,7 @@ export async function runScan(
       (r.status === "unavailable" && allowMissing),
   );
 
-  const normalized = toFindings(raws, target.root);
+  const normalized = mergeDuplicateSecrets(toFindings(raws, target.root));
   const { kept: inDiff, suppressed: outsideChangedLines } = filterToChangedLines(
     normalized,
     target,

@@ -96,3 +96,18 @@ test("unsetEnv removes inherited variables from the child", async () => {
     delete process.env.CI_TEST_LEAK;
   }
 });
+
+test("the child's $PWD matches its cwd, not the parent's (Go tools trust $PWD)", {
+  skip: process.platform === "win32",
+}, async () => {
+  const os = await import("node:os");
+  const fs = await import("node:fs");
+  const dir = fs.realpathSync(fs.mkdtempSync(`${os.tmpdir()}/ci-pwd-`));
+  try {
+    const r = await exec(node, ["-p", "process.env.PWD"], { cwd: dir, timeoutMs: 10_000 });
+    assert.equal(r.stdout.trim(), dir);
+    assert.notEqual(r.stdout.trim(), process.env.PWD);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

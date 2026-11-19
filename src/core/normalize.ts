@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
 import { type Finding, type RawFinding, type ScanTarget, severityRank } from "../types.ts";
 
 export function hash16(...parts: string[]): string {
@@ -41,6 +41,10 @@ export function toFindings(raws: readonly RawFinding[], root: string): Finding[]
   const out: Finding[] = [];
   for (const r of raws) {
     const { key, ...rest } = r;
+    // Last line of defense: a path outside the repository must never reach a report verbatim.
+    if (isAbsolute(rest.file) || rest.file.split("/").includes("..")) {
+      rest.file = `<outside-repository>/${rest.file.split(/[\\/]/).pop() ?? "unknown"}`;
+    }
     const basis =
       key ??
       (r.line !== null ? squash(reader.line(r.file, r.line) ?? r.message) : squash(r.message));
@@ -48,9 +52,45 @@ export function toFindings(raws: readonly RawFinding[], root: string): Finding[]
     const dedupeKey = `${fingerprint}:${r.line ?? ""}`;
     if (seen.has(dedupeKey)) continue;
     seen.add(dedupeKey);
-    out.push({ fingerprint, ...rest });
+    out.push({ fingerprint, ...rest, alsoReportedBy: [] });
   }
   return out;
+}
+
+/** Engines whose secrets findings win when several report the same line (dedicated scanner first). */
+const SECRETS_PRIORITY = ["gitleaks"];
+
+/**
+ * The same hardcoded secret is often reported by more than one engine (gitleaks and semgrep's
+ * secrets rules). Report it once, credit the others in `alsoReportedBy`, and keep the highest severity.
+ */
+export function mergeDuplicateSecrets(findings: Finding[]): Finding[] {
+  const groups = new Map<string, Finding[]>();
+  const rest: Finding[] = [];
+  for (const f of findings) {
+    if (f.category !== "secrets" || f.line === null) {
+      rest.push(f);
+      continue;
+    }
+    const k = `${f.file}:${f.line}`;
+    const g = groups.get(k);
+    if (g) g.push(f);
+    else groups.set(k, [f]);
+  }
+  for (const g of groups.values()) {
+    const rank = (f: Finding) => {
+      const i = SECRETS_PRIORITY.indexOf(f.engine);
+      return i === -1 ? SECRETS_PRIORITY.length : i;
+    };
+    const sorted = [...g].sort((a, b) => rank(a) - rank(b));
+    const keep = { ...(sorted[0] as Finding) };
+    const others = sorted.slice(1).filter((o) => o.engine !== keep.engine);
+    keep.alsoReportedBy = [...new Set([...keep.alsoReportedBy, ...others.map((o) => o.engine)])];
+    for (const o of others)
+      if (severityRank(o.severity) > severityRank(keep.severity)) keep.severity = o.severity;
+    rest.push(keep, ...sorted.slice(1).filter((o) => o.engine === keep.engine));
+  }
+  return rest;
 }
 
 export function sortFindings(findings: Finding[]): Finding[] {

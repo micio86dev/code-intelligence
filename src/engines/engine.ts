@@ -1,6 +1,6 @@
 import type { Config } from "../core/config.ts";
 import type { Logger } from "../core/logger.ts";
-import type { Category, ProfileName, RawFinding, ScanTarget } from "../types.ts";
+import type { Category, ProfileName, RawFinding, ScanTarget, TargetMode } from "../types.ts";
 
 export interface Detection {
   available: boolean;
@@ -19,6 +19,10 @@ export interface Selection {
 export interface RunContext {
   root: string;
   files: string[];
+  /** Scope of the scan; `all` lets engines walk the repository with their own native ignore rules. */
+  mode: TargetMode;
+  /** Config exclude globs, for engines that walk the tree themselves. */
+  exclude: readonly string[];
   config: Config;
   timeoutMs: number;
   binary: string;

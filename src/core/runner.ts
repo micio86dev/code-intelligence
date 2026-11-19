@@ -1,6 +1,6 @@
 import { availableParallelism } from "node:os";
 import type { Engine, EngineOutput, RunContext } from "../engines/engine.ts";
-import type { EngineResult, EngineStatus, RawFinding } from "../types.ts";
+import type { EngineResult, EngineStatus, RawFinding, TargetMode } from "../types.ts";
 import { ResultCache } from "./cache.ts";
 import type { Config } from "./config.ts";
 import { EngineFailure } from "./errors.ts";
@@ -10,6 +10,7 @@ import type { PlanEntry } from "./planner.ts";
 export interface RunSettings {
   root: string;
   config: Config;
+  mode: TargetMode;
   timeoutMs: number;
   cache: ResultCache;
   log: Logger;
@@ -94,6 +95,8 @@ async function runOne(
   const ctx: RunContext = {
     root: s.root,
     files: entry.files,
+    mode: s.mode,
+    exclude: s.config.exclude,
     config: s.config,
     timeoutMs: s.timeoutMs,
     binary,

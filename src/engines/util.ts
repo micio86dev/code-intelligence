@@ -1,3 +1,4 @@
+import { realpathSync } from "node:fs";
 import { isAbsolute, relative, sep } from "node:path";
 import { EngineFailure } from "../core/errors.ts";
 import { type ExecResult, exec, findBinary } from "../core/exec.ts";
@@ -56,9 +57,48 @@ export function processFailure(
   return null;
 }
 
-/** Repo-relative POSIX path from an absolute or already-relative engine path. */
+const realRoots = new Map<string, string>();
+function realRoot(root: string): string {
+  let r = realRoots.get(root);
+  if (r === undefined) {
+    try {
+      r = realpathSync(root);
+    } catch {
+      r = root;
+    }
+    realRoots.set(root, r);
+  }
+  return r;
+}
+
+const outside = (rel: string) =>
+  rel === ".." || rel.startsWith(`..${sep}`) || rel.startsWith("../");
+
+function realPath(p: string): string | null {
+  try {
+    return realpathSync(p);
+  } catch {
+    return null; // file vanished or never existed: no real path to offer
+  }
+}
+
+/**
+ * Repo-relative POSIX path from an absolute or already-relative engine path. Tools disagree on whether
+ * they report symlink-resolved paths (macOS: /var/... vs /private/var/...): git may give one form and the
+ * engine the other, in either direction. So an absolute path is tried as logical and as real, against
+ * the root as logical and as real, and the first candidate that stays inside the repository wins.
+ */
 export function toRel(root: string, p: string): string {
-  const rel = isAbsolute(p) ? relative(root, p) : p;
+  let rel = p;
+  if (isAbsolute(p)) {
+    const realP = realPath(p);
+    const candidates = [
+      relative(root, p),
+      relative(realRoot(root), p),
+      ...(realP ? [relative(root, realP), relative(realRoot(root), realP)] : []),
+    ];
+    rel = candidates.find((c) => !outside(c)) ?? candidates[0] ?? p;
+  }
   return rel.split(sep).join("/").replace(/^\.\//, "");
 }
 

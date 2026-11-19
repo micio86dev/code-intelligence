@@ -104,7 +104,12 @@
         "endLine": { "type": ["integer", "null"] },
         "message": { "type": "string" },
         "remediation": { "type": ["string", "null"] },
-        "references": { "type": "array", "items": { "type": "string" } }
+        "references": { "type": "array", "items": { "type": "string" } },
+        "alsoReportedBy": {
+          "description": "Other engines that independently reported the same issue at the same line (merged, not duplicated).",
+          "type": "array",
+          "items": { "type": "string" }
+        }
       }
     }
   }

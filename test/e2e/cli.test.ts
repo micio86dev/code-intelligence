@@ -392,3 +392,93 @@ test("a hostile .code-intel.json (ReDoS glob) is rejected quickly instead of han
   assert.ok(Date.now() - t0 < 10_000);
   assert.match(r.stderr, /exclude\[1\]: must be at most 200 characters/);
 });
+
+test("semgrep keeps its native ignores: default-ignored tests/ are not scanned, and we say so", () => {
+  const p = project({
+    ".code-intel.json": CONFIG,
+    ".semgrep/rules.yml": RULE,
+    "src/ok.js": "export const ok = 1;\n",
+  });
+  p.write("tests/bad.js", "eval(process.argv[2]);\n");
+  const only = JSON.parse(runCli(["scan", "--format", "json", "--engines", "sast"], p.dir).stdout);
+  assert.equal(
+    only.findings.length,
+    0,
+    "semgrep ignores tests/ by default, exactly as running it by hand",
+  );
+  const sg = only.engines.find((e: { engine: string }) => e.engine === "semgrep");
+  assert.match(
+    sg.warnings.join(" "),
+    /1 changed source file\(s\) were not scanned by semgrep.*tests\/bad\.js/,
+  );
+  assert.equal(only.complete, true);
+
+  p.write("src/bad.js", "eval(process.argv[2]);\n");
+  const both = JSON.parse(runCli(["scan", "--format", "json", "--engines", "sast"], p.dir).stdout);
+  assert.deepEqual(
+    both.findings.map((f: { file: string }) => f.file),
+    ["src/bad.js"],
+  );
+  const all = JSON.parse(
+    runCli(["scan", "--all", "--format", "json", "--engines", "sast"], p.dir).stdout,
+  );
+  assert.deepEqual(
+    all.findings.map((f: { file: string }) => f.file),
+    ["src/bad.js"],
+    "--all agrees with changed mode",
+  );
+});
+
+test("semgrep --include is root-anchored: a changed ./vuln.js never reports an unchanged sub/vuln.js", () => {
+  const p = project({
+    ".code-intel.json": CONFIG,
+    ".semgrep/rules.yml": RULE,
+    "sub/vuln.js": "eval(process.argv[2]);\n",
+  });
+  p.write("vuln.js", "eval(process.argv[2]);\n");
+  const j = JSON.parse(runCli(["scan", "--format", "json", "--engines", "sast"], p.dir).stdout);
+  assert.deepEqual(
+    j.findings.map((f: { file: string }) => f.file),
+    ["vuln.js"],
+  );
+});
+
+test("semgrep: file names with glob characters are still scanned", () => {
+  const p = project({
+    ".code-intel.json": CONFIG,
+    ".semgrep/rules.yml": RULE,
+    "a.js": "export const a = 1;\n",
+  });
+  p.write("src/[id].js", "eval(process.argv[2]);\n");
+  const j = JSON.parse(runCli(["scan", "--format", "json", "--engines", "sast"], p.dir).stdout);
+  assert.deepEqual(
+    j.findings.map((f: { file: string }) => f.file),
+    ["src/[id].js"],
+  );
+});
+
+test("the same hardcoded secret from gitleaks and a semgrep secrets rule is reported once", () => {
+  const rule = `rules:
+  - id: secrets.demo-aws
+    languages: [generic]
+    severity: ERROR
+    message: AWS access key id in source.
+    pattern-regex: AKIA[A-Z0-9]{16}
+`;
+  const p = project({ ".code-intel.json": CONFIG, ".semgrep/rules.yml": rule, "a.txt": "x\n" });
+  p.write("creds.txt", `aws_access_key_id = ${SECRET}\n`);
+  const j = JSON.parse(
+    runCli(["scan", "--format", "json", "--engines", "secrets,sast"], p.dir).stdout,
+  );
+  assert.equal(
+    j.engines.find((e: { engine: string }) => e.engine === "semgrep").findingCount,
+    1,
+    "semgrep did find it",
+  );
+  assert.equal(j.findings.length, 1, "but the user sees one finding");
+  assert.equal(j.findings[0].engine, "gitleaks");
+  assert.deepEqual(j.findings[0].alsoReportedBy, ["semgrep"]);
+  assert.equal(JSON.stringify(j).includes(SECRET), false);
+  const text = runCli(["scan", "--engines", "secrets,sast"], p.dir).stdout;
+  assert.match(text, /\[gitleaks \+semgrep\]/);
+});

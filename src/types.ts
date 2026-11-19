@@ -31,10 +31,12 @@ export interface Finding {
   message: string;
   remediation: string | null;
   references: string[];
+  /** Other engines that independently reported the same issue at the same place (merged into this one). */
+  alsoReportedBy: string[];
 }
 
 /** What an engine adapter returns; the core derives the fingerprint. */
-export interface RawFinding extends Omit<Finding, "fingerprint"> {
+export interface RawFinding extends Omit<Finding, "fingerprint" | "alsoReportedBy"> {
   /** Stable identity when no source line exists (e.g. "lodash@4.17.15#GHSA-xxxx"). */
   key?: string;
 }

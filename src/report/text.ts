@@ -38,7 +38,9 @@ export function renderText(r: ScanReport): string {
     L.push(`Findings (${r.summary.total})`);
     for (const f of r.findings) {
       const loc = f.line === null ? f.file : `${f.file}:${f.line}`;
-      L.push(`  ${f.severity.toUpperCase().padEnd(8)} ${loc}  [${f.engine}] ${f.ruleId}`);
+      L.push(
+        `  ${f.severity.toUpperCase().padEnd(8)} ${loc}  [${f.engine}${f.alsoReportedBy.length ? ` +${f.alsoReportedBy.join(",")}` : ""}] ${f.ruleId}`,
+      );
       L.push(`           ${f.message}`);
       if (f.remediation) L.push(`           fix: ${f.remediation}`);
     }
