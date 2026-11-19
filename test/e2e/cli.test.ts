@@ -315,3 +315,70 @@ test("trivy can be pinned for deps and reports fix guidance (network)", { skip: 
   assert.match(f.remediation, /Upgrade lodash to 4\.17\.19/);
   assert.equal(f.severity, "high");
 });
+
+const SGCONFIG = "ruleDirs:\n  - rules\n";
+const SGRULE = `id: domain-must-not-import-infra
+language: TypeScript
+severity: error
+message: The domain layer must not depend on infrastructure.
+note: Depend on a port owned by the domain and implement it in infra.
+files:
+  - src/domain/**
+rule:
+  any:
+    - pattern: import $A from "$PATH"
+    - pattern: import { $$$A } from "$PATH"
+constraints:
+  PATH:
+    regex: "infra"
+`;
+
+test("architecture: project ast-grep rules enforce layer boundaries; no sgconfig means an explicit skip", () => {
+  const p = project({
+    "sgconfig.yml": SGCONFIG,
+    "rules/domain.yml": SGRULE,
+    "src/infra/db.ts": "export class Db {}\n",
+    "src/domain/ok.ts": "export const ok = 1;\n",
+  });
+  p.write("src/domain/user.ts", 'import { Db } from "../infra/db";\nexport const db = new Db();\n');
+  const r = runCli(["scan", "--format", "json", "--engines", "architecture"], p.dir);
+  assert.equal(r.code, 1, r.stdout + r.stderr);
+  const j = JSON.parse(r.stdout);
+  assert.equal(j.engines[0].engine, "ast-grep");
+  const f = j.findings[0];
+  assert.equal(f.ruleId, "domain-must-not-import-infra");
+  assert.equal(f.file, "src/domain/user.ts");
+  assert.equal(f.line, 1);
+  assert.equal(f.severity, "high");
+  assert.match(f.remediation, /port/);
+
+  const clean = project({
+    "sgconfig.yml": SGCONFIG,
+    "rules/domain.yml": SGRULE,
+    "src/domain/ok.ts": "export const ok = 1;\n",
+  });
+  clean.write("src/domain/more.ts", "export const more = 2;\n");
+  assert.equal(runCli(["scan", "--engines", "architecture"], clean.dir).code, 0);
+
+  const none = project({ "a.ts": "export const a = 1;\n" });
+  none.write("b.ts", "export const b = 1;\n");
+  const skipped = JSON.parse(
+    runCli(["scan", "--format", "json", "--engines", "architecture"], none.dir).stdout,
+  );
+  assert.equal(skipped.engines[0].status, "skipped");
+  assert.match(skipped.engines[0].reason, /no sgconfig\.yml/);
+});
+
+test("architecture: an invalid rule is an error (exit 3), never a pass", () => {
+  const p = project({
+    "sgconfig.yml": SGCONFIG,
+    "rules/bad.yml": "id: x\nlanguage: Nope\nrule: {pattern: a}\n",
+    "a.ts": "export const a = 1;\n",
+  });
+  p.write("b.ts", "export const b = 1;\n");
+  const j = JSON.parse(
+    runCli(["scan", "--format", "json", "--engines", "architecture"], p.dir).stdout,
+  );
+  assert.equal(j.engines[0].status, "error");
+  assert.equal(j.exitCode, 3);
+});

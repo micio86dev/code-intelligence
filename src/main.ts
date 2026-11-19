@@ -2,6 +2,7 @@ import { parseArgs } from "node:util";
 import { renderDoctor, runDoctor } from "./commands/doctor.ts";
 import { renderImpact, runImpact } from "./commands/impact.ts";
 import { runInit } from "./commands/init.ts";
+import { renderMutation, runMutate } from "./commands/mutate.ts";
 import { runScan, type ScanReport } from "./commands/scan.ts";
 import { saveBaseline } from "./core/baseline.ts";
 import { UsageError } from "./core/errors.ts";
@@ -25,6 +26,7 @@ Usage: code-intel <command> [options]
 Commands:
   scan       Run engines on changed files (or the whole repo) and report findings
   baseline   Record current findings so later scans can report only new ones
+  mutate     Mutation-test changed code (StrykerJS) to find gaps in your tests
   impact     List the tests affected by your changes (uses codegraph when indexed)
   doctor     Check which engines are installed and whether the config is valid
   init       Create .code-intel.json in the current repository
@@ -65,6 +67,22 @@ the answer follows the import graph transitively. Without one it falls back to a
 heuristic (direct importers and name matches only). The index is synced before every query.
 `;
 
+const MUTATE_HELP = `Usage: code-intel mutate [files...] [--changed | --staged | --since <ref>] [options]
+
+Mutation-tests changed JavaScript/TypeScript code with StrykerJS: it makes small behavior changes
+("mutants") and runs your tests. A mutant your tests do not catch is a gap in the tests.
+Without file arguments it mutates only the lines you changed. This is slow by design; use it
+before merging or when asked about test quality, not after every edit.
+
+Requires StrykerJS in the project: npm install --save-dev @stryker-mutator/core
+Uses the project's stryker.config.* when present, otherwise runs its \`npm test\` script.
+
+Options:
+      --min-score <0-100>  Exit 1 when the mutation score is lower
+      --timeout <ms>       Time limit for the whole run (default 600000)
+      --json               Machine-readable output
+`;
+
 const SHARED = {
   help: { type: "boolean", short: "h" },
   version: { type: "boolean", short: "v" },
@@ -80,7 +98,7 @@ function parse(rest: string[]) {
   return parseArgs({
     args: rest,
     strict: true,
-    allowPositionals: false,
+    allowPositionals: true,
     options: {
       ...SHARED,
       profile: { type: "string", short: "p" },
@@ -96,6 +114,7 @@ function parse(rest: string[]) {
       "allow-missing": { type: "boolean" },
       "no-cache": { type: "boolean" },
       json: { type: "boolean" },
+      "min-score": { type: "string" },
     },
   });
 }
@@ -121,6 +140,11 @@ export async function main(argv: string[], io: Io): Promise<number> {
       throw new UsageError((e as Error).message, [`Run: code-intel ${command} --help`]);
     }
     const v = parsed.values;
+    if (parsed.positionals.length > 0 && command !== "mutate") {
+      throw new UsageError(`Unexpected argument '${parsed.positionals[0]}'`, [
+        `Run: code-intel ${command} --help`,
+      ]);
+    }
 
     if (v.help) {
       io.stdout(
@@ -173,6 +197,44 @@ export async function main(argv: string[], io: Io): Promise<number> {
           v.json || v.format === "json" ? `${JSON.stringify(r, null, 2)}\n` : renderImpact(r),
         );
         return 0;
+      }
+      case "mutate": {
+        const modes: TargetMode[] = [];
+        if (v.changed) modes.push("changed");
+        if (v.staged) modes.push("staged");
+        if (v.since !== undefined) modes.push("since");
+        if (v.all)
+          throw new UsageError(
+            "mutate does not support --all (too slow to be useful); pass files or use --changed, --staged, --since <ref>",
+          );
+        if (modes.length > 1) throw new UsageError("Use only one of --changed, --staged, --since");
+        if (modes.length > 0 && parsed.positionals.length > 0)
+          throw new UsageError("Pass either files or a scope flag, not both");
+        let minScore: number | null = null;
+        if (v["min-score"] !== undefined) {
+          minScore = Number(v["min-score"]);
+          if (!Number.isFinite(minScore) || minScore < 0 || minScore > 100)
+            throw new UsageError("--min-score must be a number between 0 and 100");
+        }
+        let timeoutMs = 600_000;
+        if (v.timeout !== undefined) {
+          timeoutMs = Number(v.timeout);
+          if (!Number.isInteger(timeoutMs) || timeoutMs < 1000)
+            throw new UsageError("--timeout must be an integer number of milliseconds (>= 1000)");
+        }
+        const r = await runMutate({
+          cwd: io.cwd,
+          mode: modes[0] ?? null,
+          ref: v.since ?? null,
+          files: parsed.positionals,
+          timeoutMs,
+          minScore,
+          log,
+        });
+        io.stdout(
+          v.json || v.format === "json" ? `${JSON.stringify(r, null, 2)}\n` : renderMutation(r),
+        );
+        return r.exitCode;
       }
       case "init": {
         const { created } = await runInit(io.cwd);

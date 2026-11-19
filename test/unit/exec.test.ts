@@ -77,3 +77,22 @@ test("chunkByLength respects the budget", () => {
   assert.equal(chunks.flat().length, 10);
   for (const c of chunks) assert.ok(c.join(" ").length <= 31);
 });
+
+test("unsetEnv removes inherited variables from the child", async () => {
+  process.env.CI_TEST_LEAK = "yes";
+  try {
+    const kept = await exec(node, ["-p", "process.env.CI_TEST_LEAK ?? 'unset'"], {
+      cwd,
+      timeoutMs: 10_000,
+    });
+    const removed = await exec(node, ["-p", "process.env.CI_TEST_LEAK ?? 'unset'"], {
+      cwd,
+      timeoutMs: 10_000,
+      unsetEnv: ["CI_TEST_LEAK"],
+    });
+    assert.equal(kept.stdout.trim(), "yes");
+    assert.equal(removed.stdout.trim(), "unset");
+  } finally {
+    delete process.env.CI_TEST_LEAK;
+  }
+});

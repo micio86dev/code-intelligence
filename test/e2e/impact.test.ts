@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { after, test } from "node:test";
-import { GIT_ENV, makeProject } from "../helpers.ts";
+import { cleanEnv, makeProject } from "../helpers.ts";
 import { runCli } from "./helpers.ts";
 
 const projects: Array<{ cleanup(): void }> = [];
@@ -63,7 +63,7 @@ test("codegraph: follows the import graph transitively", { skip: !hasCodegraph }
   const p = project();
   const init = spawnSync("codegraph", ["init", p.dir], {
     cwd: p.dir,
-    env: GIT_ENV,
+    env: cleanEnv(),
     encoding: "utf8",
   });
   assert.equal(init.status, 0, init.stderr);

@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { GIT_ENV } from "../helpers.ts";
+import { cleanEnv } from "../helpers.ts";
 
 const CLI = new URL("../../src/cli.ts", import.meta.url).pathname;
 
@@ -12,7 +12,7 @@ export interface CliResult {
 export function runCli(args: string[], cwd: string, env: Record<string, string> = {}): CliResult {
   const r = spawnSync(process.execPath, [CLI, ...args], {
     cwd,
-    env: { ...GIT_ENV, ...env },
+    env: cleanEnv(env),
     encoding: "utf8",
     timeout: 240_000,
   });

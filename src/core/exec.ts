@@ -7,6 +7,8 @@ export interface ExecOptions {
   timeoutMs: number;
   input?: string;
   env?: Record<string, string>;
+  /** Variables to remove from the inherited environment (e.g. NODE_TEST_CONTEXT). */
+  unsetEnv?: readonly string[];
   /** Max bytes kept per stream; the process is killed when exceeded. */
   maxBytes?: number;
 }
@@ -53,9 +55,11 @@ export function exec(cmd: string, args: readonly string[], opts: ExecOptions): P
   return new Promise((resolve) => {
     let child: ChildProcess;
     try {
+      const env: NodeJS.ProcessEnv = { ...process.env, NO_COLOR: "1", ...opts.env };
+      for (const k of opts.unsetEnv ?? []) delete env[k];
       child = spawn(cmd, [...args], {
         cwd: opts.cwd,
-        env: { ...process.env, NO_COLOR: "1", ...opts.env },
+        env,
         stdio: [opts.input === undefined ? "ignore" : "pipe", "pipe", "pipe"],
         shell: false,
         detached: process.platform !== "win32",

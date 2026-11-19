@@ -14,6 +14,21 @@ export const GIT_ENV = {
   GIT_COMMITTER_EMAIL: "test@example.invalid",
 };
 
+/**
+ * Environment for processes that run *inside* a fixture project: drops the parent test runner's
+ * and `npm run`'s context (NODE_TEST_CONTEXT, npm_*), which would otherwise make a nested
+ * `node --test` a no-op or a nested `npm install` operate on the outer project.
+ */
+export function cleanEnv(extra: Record<string, string> = {}): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(GIT_ENV)) {
+    if (v === undefined || k === "NODE_TEST_CONTEXT" || k.toLowerCase().startsWith("npm_"))
+      continue;
+    out[k] = v;
+  }
+  return { ...out, ...extra };
+}
+
 export function git(cwd: string, ...args: string[]): string {
   return execFileSync("git", args, { cwd, env: GIT_ENV, encoding: "utf8" });
 }
