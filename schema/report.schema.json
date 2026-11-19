@@ -1,0 +1,111 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/micio86dev/code-intelligence/main/schema/report.schema.json",
+  "title": "code-intel scan --format json (schemaVersion 1)",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "tool",
+    "profile",
+    "target",
+    "complete",
+    "durationMs",
+    "engines",
+    "summary",
+    "findings",
+    "exitCode"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "tool": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": { "name": { "type": "string" }, "version": { "type": "string" } }
+    },
+    "profile": { "enum": ["quick", "deep"] },
+    "target": {
+      "type": "object",
+      "required": ["mode", "fileCount", "excludedCount"],
+      "properties": {
+        "mode": { "enum": ["changed", "staged", "since", "all"] },
+        "ref": { "type": ["string", "null"] },
+        "isGit": { "type": "boolean" },
+        "fileCount": { "type": "integer" },
+        "excludedCount": { "type": "integer" }
+      }
+    },
+    "complete": {
+      "description": "False when any planned engine timed out, errored, or was missing (unless allowed).",
+      "type": "boolean"
+    },
+    "durationMs": { "type": "integer" },
+    "engines": { "type": "array", "items": { "$ref": "#/definitions/engineResult" } },
+    "summary": {
+      "type": "object",
+      "required": ["total", "bySeverity", "failOn", "newOnly", "suppressed"],
+      "properties": {
+        "total": { "type": "integer" },
+        "bySeverity": { "type": "object" },
+        "failOn": { "enum": ["info", "low", "medium", "high", "critical"] },
+        "newOnly": { "type": "boolean" },
+        "suppressed": {
+          "type": "object",
+          "properties": {
+            "outsideChangedLines": { "type": "integer" },
+            "baseline": { "type": "integer" }
+          }
+        }
+      }
+    },
+    "findings": { "type": "array", "items": { "$ref": "#/definitions/finding" } },
+    "exitCode": { "enum": [0, 1, 3] }
+  },
+  "definitions": {
+    "engineResult": {
+      "type": "object",
+      "required": ["engine", "category", "status", "durationMs", "findingCount"],
+      "properties": {
+        "engine": { "type": "string" },
+        "category": { "enum": ["secrets", "sast", "deps", "architecture"] },
+        "version": { "type": ["string", "null"] },
+        "status": { "enum": ["ok", "findings", "skipped", "unavailable", "timeout", "error"] },
+        "reason": { "type": ["string", "null"] },
+        "warnings": { "type": "array", "items": { "type": "string" } },
+        "durationMs": { "type": "integer" },
+        "findingCount": { "type": "integer" },
+        "cached": { "type": "boolean" },
+        "filesScanned": { "type": ["integer", "null"] }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "required": [
+        "fingerprint",
+        "engine",
+        "ruleId",
+        "category",
+        "severity",
+        "file",
+        "line",
+        "message"
+      ],
+      "properties": {
+        "fingerprint": {
+          "description": "Stable across line shifts; use it to track a finding over time.",
+          "type": "string",
+          "pattern": "^[0-9a-f]{16}$"
+        },
+        "engine": { "type": "string" },
+        "ruleId": { "type": "string" },
+        "category": { "enum": ["secrets", "sast", "deps", "architecture"] },
+        "severity": { "enum": ["info", "low", "medium", "high", "critical"] },
+        "file": { "description": "Repo-relative POSIX path.", "type": "string" },
+        "line": { "type": ["integer", "null"] },
+        "endLine": { "type": ["integer", "null"] },
+        "message": { "type": "string" },
+        "remediation": { "type": ["string", "null"] },
+        "references": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

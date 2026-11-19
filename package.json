@@ -47,7 +47,8 @@
     "test:e2e": "node --test --test-concurrency=1 \"test/e2e/**/*.test.ts\"",
     "test:all": "node --test --test-concurrency=1 \"test/**/*.test.ts\"",
     "prepare": "node scripts/prepare.mjs",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "test:install": "node --test --test-concurrency=1 \"test/install/**/*.test.ts\""
   },
   "devDependencies": {
     "@biomejs/biome": "^2.6.8",

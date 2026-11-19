@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/micio86dev/code-intelligence/main/schema/config.schema.json",
+  "title": "code-intelligence configuration (.code-intel.json)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "failOn": {
+      "description": "Lowest severity that makes `scan` exit 1.",
+      "enum": ["info", "low", "medium", "high", "critical"],
+      "default": "high"
+    },
+    "exclude": {
+      "description": "Extra globs to skip, added to the built-in defaults (.git, node_modules, vendor, dist, build, coverage, .code-intel, *.min.js, *.map). Relative, no '..', max 200 chars, at most 3 '**'.",
+      "type": "array",
+      "items": { "type": "string", "maxLength": 200 }
+    },
+    "allowMissingEngines": {
+      "description": "Treat a missing engine as a warning instead of an incomplete scan (exit 3).",
+      "type": "boolean",
+      "default": false
+    },
+    "baseline": {
+      "description": "Repo-relative path of the baseline file written by `code-intel baseline`.",
+      "type": "string",
+      "default": ".code-intel/baseline.json"
+    },
+    "lineFilter": {
+      "description": "In changed-file scans, hide SAST findings on lines the change did not touch.",
+      "type": "boolean",
+      "default": true
+    },
+    "profiles": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "quick": { "$ref": "#/definitions/profile" },
+        "deep": { "$ref": "#/definitions/profile" }
+      }
+    },
+    "engines": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "gitleaks": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "configPath": {
+              "description": "Repo-relative path of a gitleaks TOML config.",
+              "type": "string"
+            }
+          }
+        },
+        "semgrep": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "configs": {
+              "description": "Registry ids like 'p/default' or repo-relative rule files/directories. URLs are not accepted.",
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "string" },
+              "default": ["p/default"]
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "engines": {
+          "description": "Categories (secrets, sast, deps, architecture) or engine names (gitleaks, semgrep, osv-scanner, trivy, ast-grep).",
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "timeoutMs": { "type": "integer", "minimum": 1000, "maximum": 3600000 }
+      }
+    }
+  }
+}
