@@ -9,7 +9,7 @@
 | OSV-Scanner 2.7.1     | dependency vulnerabilities                | Apache-2.0                                                                                                            | https://github.com/google/osv-scanner         |
 | Trivy 0.76.1          | dependency vulnerabilities (fallback)     | Apache-2.0                                                                                                            | https://github.com/aquasecurity/trivy         |
 | ast-grep 0.51.3       | architecture rules                        | MIT                                                                                                                   | https://github.com/ast-grep/ast-grep          |
-| CodeGraph 1.2.0       | test impact (optional)                    | see project                                                                                                           | https://github.com/colbymchenry/codegraph     |
+| CodeGraph 1.2.0       | test impact (optional)                    | MIT                                                                                                                   | https://github.com/colbymchenry/codegraph     |
 | StrykerJS 10.1.1      | mutation testing (project dev dependency) | Apache-2.0                                                                                                            | https://github.com/stryker-mutator/stryker-js |
 
 Development-only dependencies: TypeScript (Apache-2.0), `@types/node` (MIT), Biome (MIT/Apache-2.0).
