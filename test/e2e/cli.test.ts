@@ -382,3 +382,13 @@ test("architecture: an invalid rule is an error (exit 3), never a pass", () => {
   assert.equal(j.engines[0].status, "error");
   assert.equal(j.exitCode, 3);
 });
+
+test("a hostile .code-intel.json (ReDoS glob) is rejected quickly instead of hanging the scan", () => {
+  const evil = JSON.stringify({ exclude: [`${"**/".repeat(40)}a`, `${"x".repeat(300)}`] });
+  const p = project({ ".code-intel.json": evil, "a.js": "x\n" });
+  const t0 = Date.now();
+  const r = runCli(["scan", "--all"], p.dir);
+  assert.equal(r.code, 2);
+  assert.ok(Date.now() - t0 < 10_000);
+  assert.match(r.stderr, /exclude\[1\]: must be at most 200 characters/);
+});

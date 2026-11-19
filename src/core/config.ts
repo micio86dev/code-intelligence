@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { CATEGORIES, isSeverity, PROFILES, type ProfileName, type Severity } from "../types.ts";
 import { UsageError } from "./errors.ts";
-import { isSafeGlob } from "./glob.ts";
+import { globProblem, isSafeGlob } from "./glob.ts";
 
 export const CONFIG_FILE = ".code-intel.json";
 

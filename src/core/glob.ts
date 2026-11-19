@@ -9,7 +9,11 @@ function escapeRe(ch: string): string {
   return ch.replace(/[.+^$()|\\]/g, "\\$&");
 }
 
-function translate(pattern: string): string {
+function translate(raw: string): string {
+  // Repeated `**/` adds nothing but backtracking cost; collapse them.
+  const pattern = raw.replace(/(?:\*\*\/){2,}/g, "**/");
+  // Braces only mean alternation when balanced; otherwise they are literal characters.
+  const balanced = pattern.split("{").length === pattern.split("}").length;
   let out = "";
   let i = 0;
   let braceDepth = 0;
@@ -27,15 +31,15 @@ function translate(pattern: string): string {
     } else if (ch === "?") {
       out += "[^/]";
       i += 1;
-    } else if (ch === "{") {
+    } else if (ch === "{" && balanced) {
       braceDepth += 1;
       out += "(?:";
       i += 1;
-    } else if (ch === "}" && braceDepth > 0) {
+    } else if (ch === "}" && balanced && braceDepth > 0) {
       braceDepth -= 1;
       out += ")";
       i += 1;
-    } else if (ch === "," && braceDepth > 0) {
+    } else if (ch === "," && balanced && braceDepth > 0) {
       out += "|";
       i += 1;
     } else if (ch === "[") {
@@ -63,6 +67,8 @@ export function globToRegExp(pattern: string): RegExp {
   const hasSlash = p.includes("/");
   const body = translate(hasSlash ? p.replace(/^\//, "") : `**/${p}`);
   // Match the entry itself or anything beneath it (directory exclusion).
+  // The pattern is escaped by translate() and its complexity is capped by globProblem().
+  // nosemgrep: javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp
   return new RegExp(`^${body}(?:/.*)?$`);
 }
 
@@ -71,9 +77,29 @@ export function compileGlobs(patterns: readonly string[]): (path: string) => boo
   return (path) => res.some((re) => re.test(path));
 }
 
-/** A pattern is unsafe if it is absolute or climbs out of the repo. */
+/** A path or pattern is unsafe if it is absolute or climbs out of the repo. */
 export function isSafeGlob(pattern: string): boolean {
   const p = pattern.replace(/\\/g, "/");
   if (p.startsWith("/") || /^[a-zA-Z]:/.test(p)) return false;
   return !p.split("/").includes("..");
+}
+
+export const MAX_GLOB_LENGTH = 200;
+export const MAX_DOUBLE_STAR = 3;
+const MAX_WILDCARDS = 12;
+
+/**
+ * Why a user-supplied glob must be rejected, or null if it is fine. Configs can come from
+ * untrusted repositories, and a regex built from a pathological glob can hang the process
+ * (JavaScript regexes have no timeout), so complexity is capped, not just checked for traversal.
+ */
+export function globProblem(pattern: string): string | null {
+  if (!isSafeGlob(pattern)) return "must be relative and must not contain '..'";
+  if (pattern.length > MAX_GLOB_LENGTH) return `must be at most ${MAX_GLOB_LENGTH} characters`;
+  const collapsed = pattern.replace(/(?:\*\*\/){2,}/g, "**/");
+  if ((collapsed.match(/\*\*/g) ?? []).length > MAX_DOUBLE_STAR)
+    return `must use '**' at most ${MAX_DOUBLE_STAR} times`;
+  if ((collapsed.match(/[*?{[]/g) ?? []).length > MAX_WILDCARDS)
+    return `must use at most ${MAX_WILDCARDS} wildcard characters`;
+  return null;
 }

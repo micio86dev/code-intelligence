@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { compileGlobs, isSafeGlob } from "../../src/core/glob.ts";
+import { compileGlobs, globProblem, isSafeGlob } from "../../src/core/glob.ts";
 
 test("bare name matches at any depth and excludes directory contents", () => {
   const m = compileGlobs(["node_modules"]);
@@ -37,4 +37,23 @@ test("unsafe globs are detected", () => {
   assert.equal(isSafeGlob("/etc/passwd"), false);
   assert.equal(isSafeGlob("C:\\x"), false);
   assert.equal(isSafeGlob("src/**/*.ts"), true);
+});
+
+test("pathological globs cannot hang the matcher (ReDoS) and are rejected by validation", () => {
+  const evil = `${"**/".repeat(14)}a`;
+  const t0 = performance.now();
+  compileGlobs([evil])(`${"d/".repeat(24)}b`);
+  assert.ok(performance.now() - t0 < 500, "repeated ** must be collapsed");
+  assert.match(globProblem("**/a/**/b/**/c/**/d") ?? "", /at most 3/);
+  assert.match(globProblem("x".repeat(201)) ?? "", /at most 200 characters/);
+  assert.match(globProblem("*a*b*c*d*e*f*g*h*i*j*k*l*m") ?? "", /wildcard/);
+  assert.equal(globProblem("src/**/*.ts"), null);
+  assert.equal(globProblem("../x") !== null, true);
+});
+
+test("unbalanced braces are literal and never throw", () => {
+  const m = compileGlobs(["a{b", "c}d"]);
+  assert.equal(m("a{b"), true);
+  assert.equal(m("c}d"), true);
+  assert.equal(m("ab"), false);
 });
