@@ -37,7 +37,10 @@ before(
 );
 after(() => rmSync(work, { recursive: true, force: true }));
 
+// Windows cannot spawn a `.cmd` shim without a shell (Node refuses since CVE-2024-27980). The binary
+// is our own freshly installed shim and every argument is a fixed literal from this file.
 const run = (args: string[], cwd = work) =>
+  // nosemgrep: javascript.lang.security.audit.spawn-shell-true.spawn-shell-true
   spawnSync(bin, args, { cwd, env: env(), encoding: "utf8", shell: process.platform === "win32" });
 
 test("installed from a tarball into a clean prefix: version, help and doctor work", () => {
