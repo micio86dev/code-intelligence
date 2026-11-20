@@ -11,6 +11,8 @@ const resultsPath = resolve(process.argv[2] ?? join(here, "results/latest.json")
 const triagePath = resolve(process.argv[3] ?? join(here, "results/triage.json"));
 const R = JSON.parse(readFileSync(resultsPath, "utf8"));
 const T = existsSync(triagePath) ? JSON.parse(readFileSync(triagePath, "utf8")) : null;
+const blindPath = join(dirname(triagePath), "triage-blind.json");
+const B = T && existsSync(blindPath) ? JSON.parse(readFileSync(blindPath, "utf8")) : null;
 
 const s = (ms) => `${(ms / 1000).toFixed(1)} s`;
 const range = (st) => `${s(st.median)} (${s(st.min)}–${s(st.max)})`;
@@ -192,6 +194,33 @@ if (T) {
     `**Across ${rv} reviewed findings: ${re} real (${pct(re)}), ${lv} accurate but low value (${pct(lv)}), ${fp} false positive (${pct(fp)}).** Read this as: on well-maintained libraries scanned across the whole repository, most pattern findings sit in example code or reflect intentional design, and the tool's value there is the small actionable fraction plus the dependency advisories. This is why the default scope is the files you changed, why SAST findings on untouched lines are hidden, and why the same secret reported by two engines is merged. The sample is small (two repositories) and the judgments are mine.`,
   );
   p();
+  if (B) {
+    p("### Second, blind pass");
+    p();
+    p(B.method);
+    p();
+    const o = B.original;
+    const b = B.blind;
+    p("| Bucket | Original labels | Blind second pass |");
+    p("|---|---:|---:|");
+    p(`| Real | ${o.real ?? 0} | ${b.real ?? 0} |`);
+    p(`| Accurate but low value | ${o.low_value ?? 0} | ${b.low_value ?? 0} |`);
+    p(`| False positive | ${o.false_positive ?? 0} | ${b.false_positive ?? 0} |`);
+    p();
+    p(
+      `The two passes agree on ${B.agreement} of ${B.total} findings (${((B.agreement / B.total) * 100).toFixed(0)}%). The second pass marked ${B.borderlineInBlindPass} findings as borderline. Every disagreement is a finding the original pass rated **real** and the blind pass rated lower:`,
+    );
+    p();
+    p("| Finding | Original | Blind | Blind reason |");
+    p("|---|---|---|---|");
+    for (const d of B.disagreements)
+      p(`| \`${d.file}:${d.line}\` (${d.rule}) | ${d.original} | ${d.blind} | ${d.reason} |`);
+    p();
+    p(
+      `**Take the range, not one number:** real findings are ${b.real ?? 0}–${o.real ?? 0} of ${B.total} (${(((b.real ?? 0) / B.total) * 100).toFixed(0)}%–${(((o.real ?? 0) / B.total) * 100).toFixed(0)}%) and false positives ${o.false_positive ?? 0}–${b.false_positive ?? 0} (${(((o.false_positive ?? 0) / B.total) * 100).toFixed(0)}%–${(((b.false_positive ?? 0) / B.total) * 100).toFixed(0)}%). Both passes are model judgments on two repositories; a human review is still outstanding.`,
+    );
+    p();
+  }
   const K = T.knownVulnerabilitySpotCheck;
   if (K) {
     p(`### Known-vulnerability spot check (${K.repo})`);

@@ -1,0 +1,730 @@
+{
+  "method": "A separate model run (not the assistant that built the project, and not a human) was given only the 67 pattern findings on express and flask with their source context and the three bucket definitions, and was told not to read any result or label file. It returned one bucket and a one-sentence reason per finding. The original labels are the build assistant's (see triage.json). Both are model judgments; neither replaces a human review.",
+  "total": 67,
+  "original": {
+    "real": 5,
+    "low_value": 50,
+    "false_positive": 12
+  },
+  "blind": {
+    "low_value": 53,
+    "real": 1,
+    "false_positive": 13
+  },
+  "borderlineInBlindPass": 17,
+  "agreement": 63,
+  "disagreements": [
+    {
+      "id": "express-1",
+      "repo": "express",
+      "file": ".github/dependabot.yml",
+      "line": 3,
+      "rule": "dependabot-missing-cooldown",
+      "original": "real",
+      "blind": "low_value",
+      "reason": "Dependabot github-actions entry for same config as sibling; actions already grouped and monthly."
+    },
+    {
+      "id": "express-10",
+      "repo": "express",
+      "file": "examples/auth/views/login.ejs",
+      "line": 5,
+      "rule": "template-explicit-unescape",
+      "original": "real",
+      "blind": "false_positive",
+      "reason": "message is built server-side from fixed strings (session error/success), not user input."
+    },
+    {
+      "id": "express-43",
+      "repo": "express",
+      "file": "examples/vhost/index.js",
+      "line": 30,
+      "rule": "direct-response-write",
+      "original": "real",
+      "blind": "low_value",
+      "reason": "Genuine reflected param in res.send string (HTML) but only in a demo vhost example."
+    },
+    {
+      "id": "flask-18",
+      "repo": "flask",
+      "file": "pyproject.toml",
+      "line": 103,
+      "rule": "uv-missing-dependency-cooldown",
+      "original": "real",
+      "blind": "low_value",
+      "reason": "uv dependency-cooldown recommendation on dev-tooling config; hardening nicety, not a vulnerability."
+    }
+  ],
+  "items": [
+    {
+      "id": "express-1",
+      "repo": "express",
+      "file": ".github/dependabot.yml",
+      "line": 3,
+      "rule": "dependabot-missing-cooldown",
+      "original": "real",
+      "blind": "low_value",
+      "borderline": true
+    },
+    {
+      "id": "express-2",
+      "repo": "express",
+      "file": ".github/dependabot.yml",
+      "line": 12,
+      "rule": "dependabot-missing-cooldown",
+      "original": "real",
+      "blind": "real",
+      "borderline": true
+    },
+    {
+      "id": "express-3",
+      "repo": "express",
+      "file": "examples/auth/index.js",
+      "line": 22,
+      "rule": "express-cookie-session-default-name",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-4",
+      "repo": "express",
+      "file": "examples/auth/index.js",
+      "line": 22,
+      "rule": "express-cookie-session-no-domain",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-5",
+      "repo": "express",
+      "file": "examples/auth/index.js",
+      "line": 22,
+      "rule": "express-cookie-session-no-expires",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-6",
+      "repo": "express",
+      "file": "examples/auth/index.js",
+      "line": 22,
+      "rule": "express-cookie-session-no-httponly",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-7",
+      "repo": "express",
+      "file": "examples/auth/index.js",
+      "line": 22,
+      "rule": "express-cookie-session-no-path",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-8",
+      "repo": "express",
+      "file": "examples/auth/index.js",
+      "line": 22,
+      "rule": "express-cookie-session-no-secure",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-9",
+      "repo": "express",
+      "file": "examples/auth/index.js",
+      "line": 25,
+      "rule": "express-session-hardcoded-secret",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-10",
+      "repo": "express",
+      "file": "examples/auth/views/login.ejs",
+      "line": 5,
+      "rule": "template-explicit-unescape",
+      "original": "real",
+      "blind": "false_positive",
+      "borderline": true
+    },
+    {
+      "id": "express-11",
+      "repo": "express",
+      "file": "examples/cookie-sessions/index.js",
+      "line": 13,
+      "rule": "express-cookie-session-default-name",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-12",
+      "repo": "express",
+      "file": "examples/cookie-sessions/index.js",
+      "line": 13,
+      "rule": "express-cookie-session-no-domain",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-13",
+      "repo": "express",
+      "file": "examples/cookie-sessions/index.js",
+      "line": 13,
+      "rule": "express-cookie-session-no-expires",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-14",
+      "repo": "express",
+      "file": "examples/cookie-sessions/index.js",
+      "line": 13,
+      "rule": "express-cookie-session-no-httponly",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-15",
+      "repo": "express",
+      "file": "examples/cookie-sessions/index.js",
+      "line": 13,
+      "rule": "express-cookie-session-no-path",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-16",
+      "repo": "express",
+      "file": "examples/cookie-sessions/index.js",
+      "line": 13,
+      "rule": "express-cookie-session-no-secure",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-17",
+      "repo": "express",
+      "file": "examples/mvc/index.js",
+      "line": 40,
+      "rule": "express-cookie-session-default-name",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-18",
+      "repo": "express",
+      "file": "examples/mvc/index.js",
+      "line": 40,
+      "rule": "express-cookie-session-no-domain",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-19",
+      "repo": "express",
+      "file": "examples/mvc/index.js",
+      "line": 40,
+      "rule": "express-cookie-session-no-expires",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-20",
+      "repo": "express",
+      "file": "examples/mvc/index.js",
+      "line": 40,
+      "rule": "express-cookie-session-no-httponly",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-21",
+      "repo": "express",
+      "file": "examples/mvc/index.js",
+      "line": 40,
+      "rule": "express-cookie-session-no-path",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-22",
+      "repo": "express",
+      "file": "examples/mvc/index.js",
+      "line": 40,
+      "rule": "express-cookie-session-no-secure",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-23",
+      "repo": "express",
+      "file": "examples/mvc/index.js",
+      "line": 43,
+      "rule": "express-session-hardcoded-secret",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-24",
+      "repo": "express",
+      "file": "examples/params/index.js",
+      "line": 67,
+      "rule": "direct-response-write",
+      "original": "false_positive",
+      "blind": "false_positive",
+      "borderline": true
+    },
+    {
+      "id": "express-25",
+      "repo": "express",
+      "file": "examples/resource/index.js",
+      "line": 46,
+      "rule": "direct-response-write",
+      "original": "false_positive",
+      "blind": "false_positive",
+      "borderline": false
+    },
+    {
+      "id": "express-26",
+      "repo": "express",
+      "file": "examples/route-map/index.js",
+      "line": 37,
+      "rule": "direct-response-write",
+      "original": "false_positive",
+      "blind": "false_positive",
+      "borderline": false
+    },
+    {
+      "id": "express-27",
+      "repo": "express",
+      "file": "examples/route-map/index.js",
+      "line": 47,
+      "rule": "direct-response-write",
+      "original": "false_positive",
+      "blind": "false_positive",
+      "borderline": false
+    },
+    {
+      "id": "express-28",
+      "repo": "express",
+      "file": "examples/route-map/index.js",
+      "line": 51,
+      "rule": "direct-response-write",
+      "original": "false_positive",
+      "blind": "false_positive",
+      "borderline": false
+    },
+    {
+      "id": "express-29",
+      "repo": "express",
+      "file": "examples/session/index.js",
+      "line": 16,
+      "rule": "express-cookie-session-default-name",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-30",
+      "repo": "express",
+      "file": "examples/session/index.js",
+      "line": 16,
+      "rule": "express-cookie-session-no-domain",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-31",
+      "repo": "express",
+      "file": "examples/session/index.js",
+      "line": 16,
+      "rule": "express-cookie-session-no-expires",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-32",
+      "repo": "express",
+      "file": "examples/session/index.js",
+      "line": 16,
+      "rule": "express-cookie-session-no-httponly",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-33",
+      "repo": "express",
+      "file": "examples/session/index.js",
+      "line": 16,
+      "rule": "express-cookie-session-no-path",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-34",
+      "repo": "express",
+      "file": "examples/session/index.js",
+      "line": 16,
+      "rule": "express-cookie-session-no-secure",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-35",
+      "repo": "express",
+      "file": "examples/session/index.js",
+      "line": 19,
+      "rule": "express-session-hardcoded-secret",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-36",
+      "repo": "express",
+      "file": "examples/session/redis.js",
+      "line": 20,
+      "rule": "express-cookie-session-default-name",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-37",
+      "repo": "express",
+      "file": "examples/session/redis.js",
+      "line": 20,
+      "rule": "express-cookie-session-no-domain",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-38",
+      "repo": "express",
+      "file": "examples/session/redis.js",
+      "line": 20,
+      "rule": "express-cookie-session-no-expires",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-39",
+      "repo": "express",
+      "file": "examples/session/redis.js",
+      "line": 20,
+      "rule": "express-cookie-session-no-httponly",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-40",
+      "repo": "express",
+      "file": "examples/session/redis.js",
+      "line": 20,
+      "rule": "express-cookie-session-no-path",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-41",
+      "repo": "express",
+      "file": "examples/session/redis.js",
+      "line": 20,
+      "rule": "express-cookie-session-no-secure",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-42",
+      "repo": "express",
+      "file": "examples/session/redis.js",
+      "line": 23,
+      "rule": "express-session-hardcoded-secret",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "express-43",
+      "repo": "express",
+      "file": "examples/vhost/index.js",
+      "line": 30,
+      "rule": "direct-response-write",
+      "original": "real",
+      "blind": "low_value",
+      "borderline": true
+    },
+    {
+      "id": "express-44",
+      "repo": "express",
+      "file": "examples/web-service/index.js",
+      "line": 89,
+      "rule": "direct-response-write",
+      "original": "false_positive",
+      "blind": "false_positive",
+      "borderline": false
+    },
+    {
+      "id": "express-45",
+      "repo": "express",
+      "file": "examples/search/index.js",
+      "line": 57,
+      "rule": "unsafe-formatstring",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": true
+    },
+    {
+      "id": "flask-1",
+      "repo": "flask",
+      "file": "docs/config.rst",
+      "line": 41,
+      "rule": "generic-api-key",
+      "original": "false_positive",
+      "blind": "false_positive",
+      "borderline": false
+    },
+    {
+      "id": "flask-2",
+      "repo": "flask",
+      "file": "docs/config.rst",
+      "line": 513,
+      "rule": "generic-api-key",
+      "original": "false_positive",
+      "blind": "false_positive",
+      "borderline": false
+    },
+    {
+      "id": "flask-3",
+      "repo": "flask",
+      "file": "docs/config.rst",
+      "line": 560,
+      "rule": "generic-api-key",
+      "original": "false_positive",
+      "blind": "false_positive",
+      "borderline": false
+    },
+    {
+      "id": "flask-4",
+      "repo": "flask",
+      "file": "docs/config.rst",
+      "line": 578,
+      "rule": "generic-api-key",
+      "original": "false_positive",
+      "blind": "false_positive",
+      "borderline": false
+    },
+    {
+      "id": "flask-5",
+      "repo": "flask",
+      "file": "docs/config.rst",
+      "line": 587,
+      "rule": "generic-api-key",
+      "original": "false_positive",
+      "blind": "false_positive",
+      "borderline": false
+    },
+    {
+      "id": "flask-6",
+      "repo": "flask",
+      "file": "docs/tutorial/deploy.rst",
+      "line": 73,
+      "rule": "generic-api-key",
+      "original": "false_positive",
+      "blind": "false_positive",
+      "borderline": false
+    },
+    {
+      "id": "flask-7",
+      "repo": "flask",
+      "file": "examples/celery/src/task_app/templates/index.html",
+      "line": 14,
+      "rule": "django-no-csrf-token",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": true
+    },
+    {
+      "id": "flask-8",
+      "repo": "flask",
+      "file": "examples/celery/src/task_app/templates/index.html",
+      "line": 24,
+      "rule": "django-no-csrf-token",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": true
+    },
+    {
+      "id": "flask-9",
+      "repo": "flask",
+      "file": "examples/celery/src/task_app/templates/index.html",
+      "line": 32,
+      "rule": "django-no-csrf-token",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": true
+    },
+    {
+      "id": "flask-10",
+      "repo": "flask",
+      "file": "examples/javascript/js_example/templates/base.html",
+      "line": 3,
+      "rule": "missing-integrity",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "flask-11",
+      "repo": "flask",
+      "file": "examples/javascript/js_example/templates/base.html",
+      "line": 4,
+      "rule": "missing-integrity",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "flask-12",
+      "repo": "flask",
+      "file": "examples/javascript/js_example/templates/jquery.html",
+      "line": 10,
+      "rule": "missing-integrity",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "flask-13",
+      "repo": "flask",
+      "file": "examples/tutorial/flaskr/templates/auth/login.html",
+      "line": 8,
+      "rule": "django-no-csrf-token",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": true
+    },
+    {
+      "id": "flask-14",
+      "repo": "flask",
+      "file": "examples/tutorial/flaskr/templates/auth/register.html",
+      "line": 8,
+      "rule": "django-no-csrf-token",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": true
+    },
+    {
+      "id": "flask-15",
+      "repo": "flask",
+      "file": "examples/tutorial/flaskr/templates/blog/create.html",
+      "line": 8,
+      "rule": "django-no-csrf-token",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": true
+    },
+    {
+      "id": "flask-16",
+      "repo": "flask",
+      "file": "examples/tutorial/flaskr/templates/blog/update.html",
+      "line": 8,
+      "rule": "django-no-csrf-token",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": true
+    },
+    {
+      "id": "flask-17",
+      "repo": "flask",
+      "file": "examples/tutorial/flaskr/templates/blog/update.html",
+      "line": 16,
+      "rule": "django-no-csrf-token",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": true
+    },
+    {
+      "id": "flask-18",
+      "repo": "flask",
+      "file": "pyproject.toml",
+      "line": 103,
+      "rule": "uv-missing-dependency-cooldown",
+      "original": "real",
+      "blind": "low_value",
+      "borderline": true
+    },
+    {
+      "id": "flask-19",
+      "repo": "flask",
+      "file": "src/flask/cli.py",
+      "line": 1022,
+      "rule": "eval-detected",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "flask-20",
+      "repo": "flask",
+      "file": "src/flask/config.py",
+      "line": 209,
+      "rule": "exec-detected",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": false
+    },
+    {
+      "id": "flask-21",
+      "repo": "flask",
+      "file": "src/flask/json/tag.py",
+      "line": 188,
+      "rule": "explicit-unescape-with-markup",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": true
+    },
+    {
+      "id": "flask-22",
+      "repo": "flask",
+      "file": "src/flask/sessions.py",
+      "line": 281,
+      "rule": "insecure-hash-algorithm-sha1",
+      "original": "low_value",
+      "blind": "low_value",
+      "borderline": true
+    }
+  ]
+}

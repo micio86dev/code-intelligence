@@ -50,9 +50,18 @@ export const firstLine = (s: string, max = 300): string =>
 
 /** Absolute paths in an engine's error text would leak the machine's layout into reports; replace them. */
 export function scrubPaths(s: string): string {
-  return s
-    .replace(/[A-Za-z]:\\(?:[^\s\\'"]+\\)+[^\s\\'"]*/g, "<path>")
-    .replace(/\/(?:[\w.@+~-]+\/)+[\w.@+~-]*/g, "<path>");
+  return (
+    s
+      .replace(/[A-Za-z]:\\(?:[^\s\\'"]+\\)+[^\s\\'"]*/g, "<path>")
+      // osv-scanner prints absolute paths without the leading slash ("private/var/folders/...").
+      // This must run before the rule below, which would otherwise leave the "private" prefix behind.
+      .replace(
+        /(?<![\w./-])(?:private\/)?(?:var|tmp|Users|home|opt|Volumes|etc|usr)\/(?:[\w.@+~-]+\/)*[\w.@+~-]+/g,
+        "<path>",
+      )
+      // Only at the start of an absolute path: a relative "src/engines/x.ts" must not become "src<path>".
+      .replace(/(?<![\w.@+~-])\/(?:[\w.@+~-]+\/)+[\w.@+~-]*/g, "<path>")
+  );
 }
 
 /**

@@ -1,5 +1,5 @@
 {
-  "reviewedBy": "the assistant that built this project, by reading each finding next to its source line; not an independent human review",
+  "reviewedBy": "the assistant that built this project, by reading each finding next to its source line; not an independent human review. A separate blind model pass is reported in triage-blind.json",
   "method": "Each pattern-based finding (semgrep, gitleaks) on the two well-maintained libraries was read next to its source line and put in one of three buckets. **Real**: the flagged behavior is present and a maintainer would reasonably act on it in this repository. **Accurate but low value**: the pattern is present, but the context makes it unimportant (example or demo applications, behavior that is intentional by design, or one configuration reported several times by sibling rules). **False positive**: the rule's concern does not apply to the flagged code (input already escaped, an object sent instead of HTML, documentation placeholders). Dependency advisories are facts about pinned versions rather than code patterns, so they are not bucketed and reachability was not assessed. Semgrep's default ignores skip `tests/` directories, so tests were not part of the semgrep scope. The judgments are mine and some are borderline; the per-finding evidence is reproducible with `bench/results/latest.json` (`findingList`).",
   "repos": [
     {
@@ -25,16 +25,36 @@
     "expected": 6,
     "detected": 4,
     "detail": [
-      { "file": "routes/login.ts", "detected": true, "by": "semgrep express-sequelize-injection" },
-      { "file": "routes/search.ts", "detected": true, "by": "semgrep express-sequelize-injection" },
+      {
+        "file": "routes/login.ts",
+        "detected": true,
+        "by": "semgrep express-sequelize-injection"
+      },
+      {
+        "file": "routes/search.ts",
+        "detected": true,
+        "by": "semgrep express-sequelize-injection"
+      },
       {
         "file": "lib/insecurity.ts",
         "detected": true,
         "by": "gitleaks private-key; semgrep hardcoded HMAC and JWT secrets"
       },
-      { "file": "routes/userProfile.ts", "detected": true, "by": "semgrep eval-detected" },
-      { "file": "routes/fileUpload.ts", "detected": false, "by": null },
-      { "file": "routes/b2bOrder.ts", "detected": false, "by": null }
+      {
+        "file": "routes/userProfile.ts",
+        "detected": true,
+        "by": "semgrep eval-detected"
+      },
+      {
+        "file": "routes/fileUpload.ts",
+        "detected": false,
+        "by": null
+      },
+      {
+        "file": "routes/b2bOrder.ts",
+        "detected": false,
+        "by": null
+      }
     ]
   }
 }

@@ -313,6 +313,19 @@ test("error details prefer the line that names the failure over an informational
   assert.equal(errorDetail("Scanning dir .\nall quiet"), "Scanning dir .");
 });
 
+test("scrubPaths also removes root-relative absolute paths that engines print without the leading slash", async () => {
+  const { scrubPaths } = await import("../../src/engines/util.ts");
+  const msg =
+    "Error during extraction: (extracting as javascript/packagelockjson) private/var/folders/ab/cd/T/tmp.X/package-lock.json: could not extract: unexpected end of JSON input";
+  const out = scrubPaths(msg);
+  assert.equal(out.includes("private"), false);
+  assert.equal(out.includes("folders"), false);
+  assert.match(out, /\(extracting as javascript\/packagelockjson\) <path>: could not extract/);
+  assert.equal(scrubPaths("tmp/xyz/package-lock.json failed"), "<path> failed");
+  // Unchanged: ordinary repository-relative paths and a segment that merely contains a root-like word stay.
+  assert.equal(scrubPaths("src/tmp/x.ts and ./relative"), "src/tmp/x.ts and ./relative");
+});
+
 test("planning only locates binaries: versions are read concurrently with the engine run, not before it", async () => {
   const detectCalls: Array<{ withVersion?: boolean } | undefined> = [];
   const slowVersion = fake("slowv", "secrets", {

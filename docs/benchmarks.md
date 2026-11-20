@@ -87,7 +87,7 @@ Planted 6 defects in a copy of the express repository, then ran `code-intel scan
 
 ## Precision (false positives)
 
-Reviewed by: the assistant that built this project, by reading each finding next to its source line; not an independent human review.
+Reviewed by: the assistant that built this project, by reading each finding next to its source line; not an independent human review. A separate blind model pass is reported in triage-blind.json.
 
 Each pattern-based finding (semgrep, gitleaks) on the two well-maintained libraries was read next to its source line and put in one of three buckets. **Real**: the flagged behavior is present and a maintainer would reasonably act on it in this repository. **Accurate but low value**: the pattern is present, but the context makes it unimportant (example or demo applications, behavior that is intentional by design, or one configuration reported several times by sibling rules). **False positive**: the rule's concern does not apply to the flagged code (input already escaped, an object sent instead of HTML, documentation placeholders). Dependency advisories are facts about pinned versions rather than code patterns, so they are not bucketed and reachability was not assessed. Semgrep's default ignores skip `tests/` directories, so tests were not part of the semgrep scope. The judgments are mine and some are borderline; the per-finding evidence is reproducible with `bench/results/latest.json` (`findingList`).
 
@@ -97,6 +97,27 @@ Each pattern-based finding (semgrep, gitleaks) on the two well-maintained librar
 | flask      |                22 |    1 |                     15 |              6 | Real: `[tool.uv]` without a dependency cooldown. Low value: 8 Django-specific CSRF-token findings on Flask example templates, 3 CDN assets without integrity hashes in examples, and four intentional behaviors (`eval`/`exec` of user-supplied startup and config files, `Markup` in the JSON tag deserializer, a SHA-1 session digest). False positives: all 6 gitleaks hits are `SECRET_KEY` example values in the documentation. Plus 53 OSV advisories on pinned development dependencies (not bucketed). |
 
 **Across 67 reviewed findings: 5 real (7%), 50 accurate but low value (75%), 12 false positive (18%).** Read this as: on well-maintained libraries scanned across the whole repository, most pattern findings sit in example code or reflect intentional design, and the tool's value there is the small actionable fraction plus the dependency advisories. This is why the default scope is the files you changed, why SAST findings on untouched lines are hidden, and why the same secret reported by two engines is merged. The sample is small (two repositories) and the judgments are mine.
+
+### Second, blind pass
+
+A separate model run (not the assistant that built the project, and not a human) was given only the 67 pattern findings on express and flask with their source context and the three bucket definitions, and was told not to read any result or label file. It returned one bucket and a one-sentence reason per finding. The original labels are the build assistant's (see triage.json). Both are model judgments; neither replaces a human review.
+
+| Bucket                 | Original labels | Blind second pass |
+| ---------------------- | --------------: | ----------------: |
+| Real                   |               5 |                 1 |
+| Accurate but low value |              50 |                53 |
+| False positive         |              12 |                13 |
+
+The two passes agree on 63 of 67 findings (94%). The second pass marked 17 findings as borderline. Every disagreement is a finding the original pass rated **real** and the blind pass rated lower:
+
+| Finding                                                        | Original | Blind          | Blind reason                                                                                        |
+| -------------------------------------------------------------- | -------- | -------------- | --------------------------------------------------------------------------------------------------- |
+| `.github/dependabot.yml:3` (dependabot-missing-cooldown)       | real     | low_value      | Dependabot github-actions entry for same config as sibling; actions already grouped and monthly.    |
+| `examples/auth/views/login.ejs:5` (template-explicit-unescape) | real     | false_positive | message is built server-side from fixed strings (session error/success), not user input.            |
+| `examples/vhost/index.js:30` (direct-response-write)           | real     | low_value      | Genuine reflected param in res.send string (HTML) but only in a demo vhost example.                 |
+| `pyproject.toml:103` (uv-missing-dependency-cooldown)          | real     | low_value      | uv dependency-cooldown recommendation on dev-tooling config; hardening nicety, not a vulnerability. |
+
+**Take the range, not one number:** real findings are 1–5 of 67 (1%–7%) and false positives 12–13 (18%–19%). Both passes are model judgments on two repositories; a human review is still outstanding.
 
 ### Known-vulnerability spot check (juice-shop)
 

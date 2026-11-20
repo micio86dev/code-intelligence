@@ -1,0 +1,78 @@
+name: Benchmarks
+
+# Manual only. Measures timings on GitHub-hosted runners, which are shared machines: treat the numbers as
+# indicative, not as a controlled benchmark. Results are uploaded as artifacts and recorded in
+# bench/results by a person, never written back automatically.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    # The full harness (existing workflow vs code-intel, incremental, cache, defect injection).
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: .github/scripts/install-engines.sh
+      - run: node dist/cli.js doctor
+      - name: Full benchmark
+        env:
+          BENCH_DIR: ${{ runner.temp }}/bench
+        run: node bench/run.mjs --runs 3 --out "$RUNNER_TEMP/bench-linux.json"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bench-linux
+          path: ${{ runner.temp }}/bench-linux.json
+          if-no-files-found: error
+
+  windows:
+    # semgrep has no native Windows build, so only the engines that exist there are timed, and the result
+    # lists the engines that were missing.
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Install gitleaks and osv-scanner (SHA-256 pinned in this file)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $bin = Join-Path $env:RUNNER_TEMP 'bin'
+          New-Item -ItemType Directory -Force -Path $bin | Out-Null
+          $glHash  = 'd29144deff3a68aa93ced33dddf84b7fdc26070add4aa0f4513094c8332afc4e'
+          $osvHash = '7121dcf420aefbbf89a7f0050c4d3094e079ff93afd334dfc96f16b02ec85800'
+          $zip = Join-Path $env:RUNNER_TEMP 'gitleaks.zip'
+          Invoke-WebRequest -Uri 'https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_windows_x64.zip' -OutFile $zip
+          if ((Get-FileHash $zip -Algorithm SHA256).Hash.ToLower() -ne $glHash) { throw 'gitleaks checksum mismatch' }
+          Expand-Archive -Path $zip -DestinationPath $bin -Force
+          $osv = Join-Path $bin 'osv-scanner.exe'
+          Invoke-WebRequest -Uri 'https://github.com/google/osv-scanner/releases/download/v2.7.1/osv-scanner_windows_amd64.exe' -OutFile $osv
+          if ((Get-FileHash $osv -Algorithm SHA256).Hash.ToLower() -ne $osvHash) { throw 'osv-scanner checksum mismatch' }
+          Add-Content -Path $env:GITHUB_PATH -Value $bin
+      - run: node dist/cli.js doctor
+        continue-on-error: true # exit 3 is expected here: semgrep is not available on Windows
+      - name: Timing
+        run: node bench/os-timing.mjs --out "$env:RUNNER_TEMP/os-timing-windows.json" --runs 3
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: bench-windows
+          path: ${{ runner.temp }}/os-timing-windows.json
+          if-no-files-found: error
