@@ -4,9 +4,10 @@ import { existsSync, mkdtempSync, readdirSync, realpathSync, rmSync } from "node
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, test } from "node:test";
+import { fileURLToPath } from "node:url";
 import { cleanEnv, makeProject } from "../helpers.ts";
 
-const REPO = new URL("../../", import.meta.url).pathname;
+const REPO = fileURLToPath(new URL("../../", import.meta.url));
 const npm = process.platform === "win32" ? "npm.cmd" : "npm";
 let work: string;
 let prefix: string;

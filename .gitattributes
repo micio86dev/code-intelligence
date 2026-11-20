@@ -1,0 +1,4 @@
+# Identical bytes on every OS (tests, fixtures and hashes must not depend on checkout line endings).
+* text=auto eol=lf
+*.png binary
+*.tgz binary

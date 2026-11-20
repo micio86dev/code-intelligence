@@ -1,7 +1,8 @@
 import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { cleanEnv } from "../helpers.ts";
 
-const CLI = new URL("../../src/cli.ts", import.meta.url).pathname;
+const CLI = fileURLToPath(new URL("../../src/cli.ts", import.meta.url));
 
 export interface CliResult {
   code: number | null;
