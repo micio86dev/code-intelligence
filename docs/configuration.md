@@ -21,17 +21,17 @@ Optional file `.code-intel.json` at the repository root. Everything has a defaul
 }
 ```
 
-| Key                           | Default                     | Notes                                                                                                                     |
-| ----------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `failOn`                      | `high`                      | Lowest severity that gives exit 1                                                                                         |
-| `exclude`                     | `[]`                        | **Added to** built-ins: `.git`, `node_modules`, `vendor`, `dist`, `build`, `coverage`, `.code-intel`, `*.min.js`, `*.map` |
-| `allowMissingEngines`         | `false`                     | Missing engine → warning instead of exit 3                                                                                |
-| `lineFilter`                  | `true`                      | Hide SAST findings on untouched lines in changed-file scans                                                               |
-| `baseline`                    | `.code-intel/baseline.json` | Repo-relative; may not point into `.git` or at the config file                                                            |
-| `profiles.<name>.engines`     | see README                  | Categories or engine names                                                                                                |
-| `profiles.<name>.timeoutMs`   | 60000 / 600000              | 1000–3600000                                                                                                              |
-| `engines.gitleaks.configPath` | none                        | Falls back to `.gitleaks.toml` if present. `.gitleaksignore` is honored                                                   |
-| `engines.semgrep.configs`     | `["p/default"]`             | Registry ids (`p/…`, `r/…`) or repo-relative paths. **URLs are rejected**                                                 |
+| Key                           | Default                     | Notes                                                                                                                                                                                                                                            |
+| ----------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `failOn`                      | `high`                      | Lowest severity that gives exit 1                                                                                                                                                                                                                |
+| `exclude`                     | `[]`                        | **Added to** built-ins: `.git`, `node_modules`, `vendor`, `dist`, `build`, `coverage`, `.code-intel`, this toolkit's own project-level skill (`.agents/skills/code-intelligence/**`, `.claude/skills/code-intelligence/**`), `*.min.js`, `*.map` |
+| `allowMissingEngines`         | `false`                     | Missing engine → warning instead of exit 3                                                                                                                                                                                                       |
+| `lineFilter`                  | `true`                      | Hide SAST findings on untouched lines in changed-file scans                                                                                                                                                                                      |
+| `baseline`                    | `.code-intel/baseline.json` | Repo-relative; may not point into `.git` or at the config file                                                                                                                                                                                   |
+| `profiles.<name>.engines`     | see README                  | Categories or engine names                                                                                                                                                                                                                       |
+| `profiles.<name>.timeoutMs`   | 60000 / 600000              | 1000–3600000                                                                                                                                                                                                                                     |
+| `engines.gitleaks.configPath` | none                        | Falls back to `.gitleaks.toml` if present. `.gitleaksignore` is honored                                                                                                                                                                          |
+| `engines.semgrep.configs`     | `["p/default"]`             | Registry ids (`p/…`, `r/…`) or repo-relative paths. **URLs are rejected**                                                                                                                                                                        |
 
 ## Configuration from untrusted repositories
 

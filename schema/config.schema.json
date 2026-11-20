@@ -12,7 +12,7 @@
       "default": "high"
     },
     "exclude": {
-      "description": "Extra globs to skip, added to the built-in defaults (.git, node_modules, vendor, dist, build, coverage, .code-intel, *.min.js, *.map). Relative, no '..', max 200 chars, at most 3 '**'.",
+      "description": "Extra globs to skip, added to the built-in defaults (.git, node_modules, vendor, dist, build, coverage, .code-intel, the toolkit's own project-level skill under .agents/skills and .claude/skills, *.min.js, *.map). Relative, no '..', max 200 chars, at most 3 '**'.",
       "type": "array",
       "items": { "type": "string", "maxLength": 200 }
     },

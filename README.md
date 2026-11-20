@@ -71,7 +71,7 @@ npm install -g code-intelligence
 Or from a GitHub release (the same prebuilt tarball, no build step):
 
 ```bash
-npm install -g https://github.com/micio86dev/code-intelligence/releases/download/v0.1.5/code-intelligence-0.1.5.tgz
+npm install -g https://github.com/micio86dev/code-intelligence/releases/download/v0.1.6/code-intelligence-0.1.6.tgz
 ```
 
 Or straight from the repository (builds on install; this can fail if your npm config sets `allow-scripts`, see [troubleshooting](docs/troubleshooting.md)):

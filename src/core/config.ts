@@ -43,6 +43,10 @@ export const DEFAULT_EXCLUDE = [
   "build",
   "coverage",
   ".code-intel",
+  // This toolkit's own skill, when installed at project level: untracked (so "changed") in that project, and
+  // its text quotes the suppression markers, which would be counted as suppressions in the scanned code.
+  ".agents/skills/code-intelligence/**",
+  ".claude/skills/code-intelligence/**",
   "*.min.js",
   "*.map",
 ];

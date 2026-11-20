@@ -4,6 +4,12 @@ All notable changes to this project are documented here. Format based on [Keep a
 
 ## [Unreleased]
 
+## [0.1.6]
+
+### Fixed
+
+- A project-level install of this toolkit's own skill (`.agents/skills/code-intelligence`, `.claude/skills/code-intelligence`) is no longer scanned. Its files are untracked, so every scan of that project counted them as changed, and the skill text (which quotes `gitleaks:allow` and `nosemgrep`) produced a false "1 inline suppression comment" note. Found in an interactive Gentle Shell test. Other skills and agent configuration are still scanned.
+
 ## [0.1.5]
 
 ### Changed

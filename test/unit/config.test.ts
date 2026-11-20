@@ -162,3 +162,27 @@ test("every spelling the OS really resolves to .git on a real Windows volume is 
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("the toolkit's own installed skill is excluded by default, other skills are still scanned", async () => {
+  const { compileGlobs } = await import("../../src/core/glob.ts");
+  const isExcluded = compileGlobs(DEFAULT_EXCLUDE);
+  // The skill text quotes `gitleaks:allow` and `nosemgrep`, which would be counted as suppressions in the
+  // scanned project, and its files are untracked (so "changed") in every project that installed it.
+  for (const p of [
+    ".agents/skills/code-intelligence/SKILL.md",
+    ".agents/skills/code-intelligence/references/findings.md",
+    ".claude/skills/code-intelligence/SKILL.md",
+  ]) {
+    assert.equal(isExcluded(p), true, p);
+  }
+  // Unchanged: a user's own skills and agent configuration are still scanned (they can hold real secrets).
+  for (const p of [
+    ".agents/skills/my-skill/SKILL.md",
+    ".claude/skills/other/SKILL.md",
+    ".claude/settings.local.json",
+    "src/code-intelligence/index.ts",
+    "docs/.agents/skills/code-intelligence/SKILL.md",
+  ]) {
+    assert.equal(isExcluded(p), false, p);
+  }
+});
