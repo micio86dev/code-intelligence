@@ -5,6 +5,7 @@ import { UsageError } from "../core/errors.ts";
 import { exec } from "../core/exec.ts";
 import { isSafeGlob } from "../core/glob.ts";
 import type { Logger } from "../core/logger.ts";
+import { isPlainFileInside } from "../core/safefs.ts";
 import { resolveTarget } from "../core/targets.ts";
 import { ENGINES } from "../engines/registry.ts";
 import { firstLine } from "../engines/util.ts";
@@ -161,8 +162,8 @@ export async function runMutate(opts: {
   let targetInfo: MutationReport["target"];
   if (opts.files.length > 0) {
     for (const f of opts.files) {
-      if (!isSafeGlob(f) || !existsSync(join(root, f)))
-        throw new UsageError(`Cannot mutate '${f}': not an existing path inside the repository`);
+      if (!isSafeGlob(f) || !isPlainFileInside(root, f))
+        throw new UsageError(`Cannot mutate '${f}': not a regular file inside the repository`);
     }
     candidates = opts.files.map((f) => f.replace(/\\/g, "/").replace(/^\.\//, ""));
     targetInfo = { mode: "files", ref: null };
@@ -259,15 +260,15 @@ export async function runMutate(opts: {
     "run",
     "--reporters",
     "json",
-    "--mutate",
-    toMutate
+    // `--mutate=<list>` as one argument: a file named like an option can never be read as a flag.
+    `--mutate=${toMutate
       .map((f) => {
         const ranges = changedLines.get(f);
         return ranges && ranges.length > 0
           ? ranges.map((r) => `${f}:${r.start}-${r.end}`).join(",")
           : f;
       })
-      .join(","),
+      .join(",")}`,
   ];
   if (!hasConfig) {
     let testScript = "";

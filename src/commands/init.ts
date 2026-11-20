@@ -1,7 +1,7 @@
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { CONFIG_FILE } from "../core/config.ts";
 import { UsageError } from "../core/errors.ts";
+import { lexists, safeWrite, UnsafePathError } from "../core/safefs.ts";
 import { findGitRoot } from "../core/targets.ts";
 
 const TEMPLATE = {
@@ -11,19 +11,22 @@ const TEMPLATE = {
   exclude: [],
 };
 
-/** Create .code-intel.json and the .code-intel/ working dir. Never overwrites anything. */
+/** Create .code-intel.json and the .code-intel/ working dir. Never overwrites anything, never follows a link. */
 export async function runInit(cwd: string): Promise<{ created: string[] }> {
   const root = (await findGitRoot(cwd)) ?? cwd;
-  const file = join(root, CONFIG_FILE);
-  if (existsSync(file)) throw new UsageError(`${CONFIG_FILE} already exists; leaving it untouched`);
-  writeFileSync(file, `${JSON.stringify(TEMPLATE, null, 2)}\n`);
-  const dir = join(root, ".code-intel");
-  mkdirSync(dir, { recursive: true });
-  const ignore = join(dir, ".gitignore");
-  const created = [CONFIG_FILE];
-  if (!existsSync(ignore)) {
-    writeFileSync(ignore, "cache/\n");
-    created.push(".code-intel/.gitignore");
+  // lstat-based: a dangling symlink named .code-intel.json counts as "exists" (existsSync would say no).
+  if (lexists(join(root, CONFIG_FILE)))
+    throw new UsageError(`${CONFIG_FILE} already exists; leaving it untouched`);
+  try {
+    safeWrite(root, CONFIG_FILE, `${JSON.stringify(TEMPLATE, null, 2)}\n`);
+    const created = [CONFIG_FILE];
+    if (!lexists(join(root, ".code-intel", ".gitignore"))) {
+      safeWrite(root, ".code-intel/.gitignore", "cache/\n");
+      created.push(".code-intel/.gitignore");
+    }
+    return { created };
+  } catch (e) {
+    if (e instanceof UnsafePathError) throw new UsageError(`init: ${e.message}`);
+    throw e;
   }
-  return { created };
 }

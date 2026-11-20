@@ -25,16 +25,17 @@ Scope (default `--changed` inside a git repo, `--all` otherwise):
 
 Options:
 
-| Flag                                          | Meaning                                                                                                                           |
-| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `-p, --profile quick\|deep`                   | See README. Default `quick`                                                                                                       |
-| `-e, --engines a,b`                           | Categories (`secrets`, `sast`, `deps`, `architecture`) and/or engines (`gitleaks`, `semgrep`, `osv-scanner`, `trivy`, `ast-grep`) |
-| `-f, --format text\|json\|sarif`              | Default `text`                                                                                                                    |
-| `--new-only`                                  | Hide findings present in the baseline                                                                                             |
-| `--fail-on info\|low\|medium\|high\|critical` | Default `high` (or config)                                                                                                        |
-| `--timeout <ms>`                              | Per-engine limit, minimum 1000                                                                                                    |
-| `--allow-missing`                             | A missing engine no longer makes the scan incomplete                                                                              |
-| `--no-cache`                                  | Neither read nor write cached results                                                                                             |
+| Flag                                          | Meaning                                                                                                                                                                                                                       |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `-p, --profile quick\|deep`                   | See README. Default `quick`                                                                                                                                                                                                   |
+| `-e, --engines a,b`                           | Categories (`secrets`, `sast`, `deps`, `architecture`) and/or engines (`gitleaks`, `semgrep`, `osv-scanner`, `trivy`, `ast-grep`)                                                                                             |
+| `-f, --format text\|json\|sarif`              | Default `text`                                                                                                                                                                                                                |
+| `--new-only`                                  | Hide findings present in the baseline                                                                                                                                                                                         |
+| `--fail-on info\|low\|medium\|high\|critical` | Default `high` (or config)                                                                                                                                                                                                    |
+| `--timeout <ms>`                              | Per-engine limit, minimum 1000                                                                                                                                                                                                |
+| `--allow-missing`                             | A missing engine no longer makes the scan incomplete                                                                                                                                                                          |
+| `--no-cache`                                  | Neither read nor write cached results                                                                                                                                                                                         |
+| `--ignore-repo-config`                        | Discard the repository's own `.code-intel.json`, `.gitleaks.toml`, `.gitleaksignore` and baseline. Use it on code you do not control: a repository can configure a scan to find nothing. Cannot be combined with `--new-only` |
 
 ## impact
 

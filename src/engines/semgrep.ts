@@ -1,5 +1,6 @@
 import type { Config } from "../core/config.ts";
 import { chunkByLength, exec } from "../core/exec.ts";
+import { hashPaths } from "../core/hashing.ts";
 import type { RawFinding, Severity } from "../types.ts";
 import { type Engine, type EngineOutput, isLockfile, type RunContext } from "./engine.ts";
 import { detectBinary, parseJson, processFailure, toRel } from "./util.ts";
@@ -50,7 +51,14 @@ export const semgrep: Engine = {
   },
   // Registry rulesets change remotely, so only fully local rule sets are safe to cache.
   cacheable: (c: Config) => c.engines.semgrep.configs.every((x) => !isRegistry(x)),
-  cacheInputs: (c: Config) => c.engines.semgrep.configs,
+  cacheInputs: (c: Config, root: string) => [
+    ...c.engines.semgrep.configs,
+    // Cacheable runs only use local rule files; their contents are part of the result's identity.
+    hashPaths(
+      root,
+      c.engines.semgrep.configs.filter((x) => !isRegistry(x)),
+    ),
+  ],
   async run(ctx: RunContext): Promise<EngineOutput> {
     const base = ["scan", "--metrics=off", "--json", "--quiet", "--disable-version-check"];
     for (const c of ctx.config.engines.semgrep.configs) base.push("--config", c);
@@ -107,6 +115,7 @@ export const semgrep: Engine = {
         nonFatal.push(`${type}${er.path ? ` in ${toRel(ctx.root, er.path)}` : ""}`);
       }
       for (const m of out.results) {
+        const secret = isSecretsRule(m.check_id);
         const refs = Array.isArray(m.extra.metadata?.references)
           ? (m.extra.metadata.references as unknown[]).filter(
               (x): x is string => typeof x === "string",
@@ -116,13 +125,21 @@ export const semgrep: Engine = {
         findings.push({
           engine: "semgrep",
           ruleId: m.check_id,
-          category: isSecretsRule(m.check_id) ? "secrets" : "sast",
+          category: secret ? "secrets" : "sast",
           severity: SEVERITY[m.extra.severity] ?? "medium",
           file: toRel(ctx.root, m.path),
           line: m.start.line,
           endLine: m.end.line,
-          message: m.extra.message.replace(/\s+/g, " ").trim(),
-          remediation: m.extra.fix ? `Suggested fix: ${m.extra.fix}` : null,
+          // Rule messages and fixes can interpolate the matched text (`$VALUE`). For credentials that would
+          // copy the secret into reports and the cache, so secrets findings get a fixed message.
+          message: secret
+            ? `Possible hardcoded credential detected by rule ${m.check_id.split(".").slice(-1)[0]}`
+            : m.extra.message.replace(/\s+/g, " ").trim(),
+          remediation: secret
+            ? "Treat it as exposed: revoke and rotate it, remove it from the code and history, and load it from a secret manager."
+            : m.extra.fix
+              ? `Suggested fix: ${m.extra.fix}`
+              : null,
           references: [...new Set(refs)].slice(0, 3),
         });
       }

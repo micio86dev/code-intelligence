@@ -37,9 +37,14 @@ class LineReader {
  */
 export function toFindings(raws: readonly RawFinding[], root: string): Finding[] {
   const reader = new LineReader(root);
-  const seen = new Set<string>();
+  const exact = new Set<string>();
+  const occurrences = new Map<string, number>();
   const out: Finding[] = [];
-  for (const r of raws) {
+  // Deterministic order, so the occurrence index of identical lines is stable between runs.
+  const ordered = [...raws].sort(
+    (a, b) => a.file.localeCompare(b.file) || (a.line ?? 0) - (b.line ?? 0),
+  );
+  for (const r of ordered) {
     const { key, ...rest } = r;
     // Last line of defense: a path outside the repository must never reach a report verbatim.
     if (isAbsolute(rest.file) || rest.file.split("/").includes("..")) {
@@ -48,10 +53,19 @@ export function toFindings(raws: readonly RawFinding[], root: string): Finding[]
     const basis =
       key ??
       (r.line !== null ? squash(reader.line(r.file, r.line) ?? r.message) : squash(r.message));
-    const fingerprint = hash16(r.engine, r.ruleId, r.file, basis);
-    const dedupeKey = `${fingerprint}:${r.line ?? ""}`;
-    if (seen.has(dedupeKey)) continue;
-    seen.add(dedupeKey);
+    // The same engine reporting the same thing twice is one finding.
+    const exactKey = `${r.engine}|${r.ruleId}|${r.file}|${r.line ?? ""}|${basis}`;
+    if (exact.has(exactKey)) continue;
+    exact.add(exactKey);
+    // Identical lines in one file are different findings: the n-th copy gets its own identity, so a
+    // baselined `eval(x)` cannot hide a newly added copy of the same line. The first keeps the plain hash.
+    const baseKey = `${r.engine}|${r.ruleId}|${r.file}|${basis}`;
+    const index = occurrences.get(baseKey) ?? 0;
+    occurrences.set(baseKey, index + 1);
+    const fingerprint =
+      index === 0
+        ? hash16(r.engine, r.ruleId, r.file, basis)
+        : hash16(r.engine, r.ruleId, r.file, basis, String(index));
     out.push({ fingerprint, ...rest, alsoReportedBy: [] });
   }
   return out;

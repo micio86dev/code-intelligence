@@ -58,6 +58,16 @@
       }
     },
     "findings": { "type": "array", "items": { "$ref": "#/definitions/finding" } },
+    "config": {
+      "description": "Repository-supplied configuration that shaped the scan. A repository can configure a scan to find less, so non-default settings are always listed.",
+      "type": "object",
+      "required": ["file", "ignored", "inEffect"],
+      "properties": {
+        "file": { "type": ["string", "null"] },
+        "ignored": { "type": "boolean" },
+        "inEffect": { "type": "array", "items": { "type": "string" } }
+      }
+    },
     "exitCode": { "enum": [0, 1, 3] }
   },
   "definitions": {

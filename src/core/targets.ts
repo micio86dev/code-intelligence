@@ -1,12 +1,14 @@
-import { lstatSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { lstatSync, readdirSync, realpathSync } from "node:fs";
+import { join, sep } from "node:path";
 import type { LineRange, ScanTarget, TargetMode } from "../types.ts";
 import { UsageError } from "./errors.ts";
 import { exec } from "./exec.ts";
 import { compileGlobs } from "./glob.ts";
 
 const GIT_TIMEOUT = 30_000;
-const GIT = ["-c", "core.quotepath=off", "-c", "core.fsmonitor=false"];
+// A repository can carry its own git configuration (a copied or extracted .git directory). Neutralize the
+// settings that make `git diff`/`ls-files` run external programs: fsmonitor hooks and textconv/external diff.
+const GIT = ["-c", "core.quotepath=off", "-c", "core.fsmonitor=false", "-c", "diff.external="];
 
 async function git(
   cwd: string,
@@ -29,12 +31,35 @@ async function hasCommits(root: string): Promise<boolean> {
   return (await git(root, ["rev-parse", "--verify", "--quiet", "HEAD"])).ok;
 }
 
-/** Parse `git diff -U0` output into added-line ranges per file. */
+/**
+ * Parse `git diff -U0` output into added-line ranges per file.
+ *
+ * File headers (`+++ path`) are only recognized in a file's header block, and hunk bodies are consumed
+ * by the exact line counts their `@@` header declares. Without that, an added source line such as
+ * `++ /dev/null` renders as `+++ /dev/null` and would be mistaken for a header, silently dropping the
+ * rest of the file's hunks and hiding findings from the changed-line filter.
+ */
 export function parseChangedLines(diff: string): Map<string, LineRange[]> {
   const result = new Map<string, LineRange[]>();
   let current: string | null = null;
+  let inHeader = false;
+  let oldLeft = 0;
+  let newLeft = 0;
   for (const line of diff.split("\n")) {
-    if (line.startsWith("+++ ")) {
+    if (oldLeft > 0 || newLeft > 0) {
+      // Inside a hunk body: whatever the content looks like, it is content.
+      if (line.startsWith("+")) newLeft -= 1;
+      else if (line.startsWith("-")) oldLeft -= 1;
+      else if (!line.startsWith("\\")) {
+        oldLeft -= 1;
+        newLeft -= 1;
+      }
+      continue;
+    }
+    if (line.startsWith("diff --git ")) {
+      inHeader = true;
+      current = null;
+    } else if (inHeader && line.startsWith("+++ ")) {
       let p = line.slice(4).split("\t")[0] as string;
       if (p === "/dev/null") {
         current = null;
@@ -43,12 +68,14 @@ export function parseChangedLines(diff: string): Map<string, LineRange[]> {
       if (p.startsWith('"') && p.endsWith('"')) p = p.slice(1, -1);
       current = p.startsWith("b/") ? p.slice(2) : p;
       if (!result.has(current)) result.set(current, []);
-    } else if (line.startsWith("@@") && current) {
-      const m = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/.exec(line);
+    } else if (line.startsWith("@@")) {
+      const m = /^@@ -\d+(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/.exec(line);
       if (!m) continue;
-      const start = Number(m[1]);
-      const count = m[2] === undefined ? 1 : Number(m[2]);
-      if (count > 0) result.get(current)?.push({ start, end: start + count - 1 });
+      inHeader = false;
+      oldLeft = m[1] === undefined ? 1 : Number(m[1]);
+      newLeft = m[3] === undefined ? 1 : Number(m[3]);
+      const start = Number(m[2]);
+      if (current && newLeft > 0) result.get(current)?.push({ start, end: start + newLeft - 1 });
     }
   }
   return result;
@@ -97,7 +124,15 @@ export async function resolveTarget(opts: TargetOptions): Promise<ScanTarget> {
     rels = splitZ(
       (await git(root, ["diff", "--cached", "--name-only", "-z", "--diff-filter=ACMR"])).out,
     );
-    diffArgs = ["diff", "--cached", "-U0", "--no-color", "--no-ext-diff", "--diff-filter=ACMR"];
+    diffArgs = [
+      "diff",
+      "--cached",
+      "-U0",
+      "--no-color",
+      "--no-ext-diff",
+      "--no-textconv",
+      "--diff-filter=ACMR",
+    ];
   } else {
     let base = "HEAD";
     if (mode === "since") {
@@ -119,11 +154,25 @@ export async function resolveTarget(opts: TargetOptions): Promise<ScanTarget> {
       if (!tracked.ok)
         throw new UsageError(`git diff failed: ${tracked.err.trim().split("\n")[0]}`);
       rels = [...splitZ(tracked.out), ...untracked];
-      diffArgs = ["diff", "-U0", "--no-color", "--no-ext-diff", "--diff-filter=ACMR", base];
+      diffArgs = [
+        "diff",
+        "-U0",
+        "--no-color",
+        "--no-ext-diff",
+        "--no-textconv",
+        "--diff-filter=ACMR",
+        base,
+      ];
     }
   }
 
   const isExcluded = compileGlobs(opts.exclude);
+  let realRoot = root;
+  try {
+    realRoot = realpathSync.native(root);
+  } catch {
+    /* keep the logical root */
+  }
   const seen = new Set<string>();
   const files: string[] = [];
   let excludedCount = 0;
@@ -136,7 +185,15 @@ export async function resolveTarget(opts: TargetOptions): Promise<ScanTarget> {
       continue;
     }
     try {
-      if (!lstatSync(join(root, rel)).isFile()) continue; // drops deleted files, symlinks, submodules
+      const abs = join(root, rel);
+      if (!lstatSync(abs).isFile()) continue; // drops deleted files, symlinks, submodules
+      // The last component is not a link, but a parent directory might be (a worktree that differs from the
+      // index). Never read a file whose real location is outside the repository.
+      const real = realpathSync.native(abs);
+      if (real !== realRoot && !real.startsWith(realRoot + sep)) {
+        excludedCount += 1;
+        continue;
+      }
     } catch {
       continue;
     }

@@ -40,11 +40,41 @@ test("explicit key wins over source line; output never carries the key or source
   assert.equal(JSON.stringify(f).includes("secret"), false);
 });
 
-test("exact duplicates collapse; same fingerprint on different lines is kept", () => {
+test("exact duplicates collapse; identical lines at different places get distinct identities", () => {
   p.write("a.js", "same\nsame\n");
   const out = toFindings([raw({ line: 1 }), raw({ line: 1 }), raw({ line: 2 })], p.dir);
-  assert.equal(out.length, 2);
-  assert.equal(out[0]?.fingerprint, out[1]?.fingerprint);
+  assert.equal(out.length, 2, "the same finding reported twice is one finding");
+  assert.notEqual(out[0]?.fingerprint, out[1]?.fingerprint);
+  // the first occurrence keeps the plain identity, so existing baselines stay valid
+  const single = toFindings([raw({ line: 1 })], p.dir);
+  assert.equal(out[0]?.fingerprint, single[0]?.fingerprint);
+});
+
+test("a baselined line cannot hide a newly added copy of the same line (verifier repro)", () => {
+  p.write("a.js", "eval(userInput)\n");
+  const before = toFindings([raw({ line: 1, endLine: 1 })], p.dir);
+  const base = new Set(before.map((f) => f.fingerprint));
+  p.write("a.js", "eval(userInput)\neval(userInput)\n");
+  const after = toFindings([raw({ line: 1, endLine: 1 }), raw({ line: 2, endLine: 2 })], p.dir);
+  assert.equal(after.length, 2);
+  const fresh = after.filter((f) => !base.has(f.fingerprint));
+  assert.equal(
+    fresh.length,
+    1,
+    "the second copy is a new finding even though the baseline holds the first",
+  );
+  assert.equal(fresh[0]?.line, 2);
+});
+
+test("fingerprints are stable regardless of the order engines report findings", () => {
+  p.write("a.js", "x\nx\nx\n");
+  const fwd = toFindings([raw({ line: 1 }), raw({ line: 2 }), raw({ line: 3 })], p.dir).map(
+    (f) => f.fingerprint,
+  );
+  const rev = toFindings([raw({ line: 3 }), raw({ line: 2 }), raw({ line: 1 })], p.dir).map(
+    (f) => f.fingerprint,
+  );
+  assert.deepEqual([...fwd].sort(), [...rev].sort());
 });
 
 test("sorting: severity desc, then file, then line", () => {

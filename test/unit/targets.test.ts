@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { after, test } from "node:test";
 import { UsageError } from "../../src/core/errors.ts";
 import { parseChangedLines, resolveTarget } from "../../src/core/targets.ts";
-import { git, makeProject } from "../helpers.ts";
+import { GIT_ENV, git, makeProject } from "../helpers.ts";
 
 const projects: Array<{ cleanup(): void }> = [];
 after(() => {
@@ -18,13 +18,28 @@ const EXCL = ["node_modules"];
 test("parseChangedLines handles hunks, single lines, deletions and spaces in names", () => {
   const diff = [
     "diff --git a/a.js b/a.js",
+    "index 111..222 100644",
     "--- a/a.js",
     "+++ b/a.js",
     "@@ -1,0 +2,3 @@",
+    "+x",
+    "+y",
+    "+z",
     "@@ -9 +12 @@",
+    "-old",
+    "+new",
     "@@ -20,2 +22,0 @@",
+    "-gone1",
+    "-gone2",
+    "\\ No newline at end of file",
+    "diff --git a/with space.js b/with space.js",
+    "--- a/with space.js\t",
     "+++ b/with space.js\t",
     "@@ -1 +1,2 @@",
+    "-q",
+    "+r",
+    "+s",
+    "",
   ].join("\n");
   const m = parseChangedLines(diff);
   assert.deepEqual(m.get("a.js"), [
@@ -32,6 +47,36 @@ test("parseChangedLines handles hunks, single lines, deletions and spaces in nam
     { start: 12, end: 12 },
   ]);
   assert.deepEqual(m.get("with space.js"), [{ start: 1, end: 2 }]);
+});
+
+test("parseChangedLines cannot be fooled by added lines that look like file headers (verifier repro)", () => {
+  // The added source line `++ /dev/null` renders in the diff as `+++ /dev/null`; a naive parser
+  // takes it for a header and drops every later hunk of the file, hiding findings from the line filter.
+  const diff = [
+    "diff --git a/app.js b/app.js",
+    "--- a/app.js",
+    "+++ b/app.js",
+    "@@ -1,0 +1,4 @@",
+    "+a",
+    "+/*",
+    "+++ /dev/null",
+    "+*/",
+    "@@ -9,0 +12,2 @@",
+    "+eval(userInput)",
+    "++ b/other.js",
+    "",
+  ].join("\n");
+  const m = parseChangedLines(diff);
+  assert.deepEqual(m.get("app.js"), [
+    { start: 1, end: 4 },
+    { start: 12, end: 13 },
+  ]);
+  assert.equal(
+    m.has("other.js"),
+    false,
+    "a spoofed header must not create or redirect a file entry",
+  );
+  assert.equal(m.size, 1);
 });
 
 test("changed mode returns modified and untracked files, not unchanged ones", async () => {
@@ -112,5 +157,55 @@ test("outside git: defaults to all, and git-only modes are usage errors", async 
   await assert.rejects(
     resolveTarget({ cwd: p.dir, mode: "staged", ref: null, exclude: EXCL }),
     UsageError,
+  );
+});
+
+test("a file reached through a symlinked parent directory is never scanned (verifier repro)", {
+  skip: process.platform === "win32",
+}, async () => {
+  const { mkdirSync, rmSync, symlinkSync, writeFileSync } = await import("node:fs");
+  const { join } = await import("node:path");
+  const outside = mk({ "secret.js": "outside\n" }, { git: false });
+  const p = mk({ "d/f.js": "inside\n", "ok.js": "ok\n" });
+  p.commit();
+  // The index says d/f.js, but the worktree now has d as a link to a directory outside the repository.
+  rmSync(join(p.dir, "d"), { recursive: true });
+  symlinkSync(outside.dir, join(p.dir, "d"));
+  writeFileSync(join(outside.dir, "f.js"), "outside token\n");
+  mkdirSync(join(p.dir, "real"), { recursive: true });
+  writeFileSync(join(p.dir, "real", "x.js"), "x\n");
+  const t = await resolveTarget({ cwd: p.dir, mode: "all", ref: null, exclude: EXCL });
+  assert.equal(t.files.includes("d/f.js"), false, "must not read through the symlinked directory");
+  assert.ok(t.files.includes("ok.js") && t.files.includes("real/x.js"));
+});
+
+test("a hostile .git/config textconv is not executed by diff (verifier repro)", {
+  skip: process.platform === "win32",
+}, async () => {
+  const { chmodSync, existsSync, rmSync, writeFileSync } = await import("node:fs");
+  const { execFileSync } = await import("node:child_process");
+  const { join } = await import("node:path");
+  const p = mk({ "a.txt": "one\n", ".gitattributes": "* diff=pwn\n" });
+  p.commit();
+  const helper = mk({}, { git: false });
+  const marker = join(helper.dir, "PWNED");
+  const script = join(helper.dir, "conv.sh");
+  writeFileSync(script, `#!/bin/sh\ntouch "${marker}"\ncat "$1"\n`);
+  chmodSync(script, 0o755);
+  git(p.dir, "config", "diff.pwn.textconv", script);
+  writeFileSync(join(p.dir, "a.txt"), "one\ntwo\n");
+
+  // Precondition: the vector is real here. A plain `git diff` runs the configured textconv.
+  execFileSync("git", ["diff", "HEAD"], { cwd: p.dir, env: GIT_ENV, stdio: "ignore" });
+  assert.equal(existsSync(marker), true, "precondition: plain git diff executes textconv");
+  rmSync(marker);
+
+  const t = await resolveTarget({ cwd: p.dir, mode: "changed", ref: null, exclude: EXCL });
+  assert.deepEqual(t.files, ["a.txt"]);
+  assert.deepEqual(t.changedLines.get("a.txt"), [{ start: 2, end: 2 }]);
+  assert.equal(
+    existsSync(marker),
+    false,
+    "code-intel must not run the repository's textconv command",
   );
 });

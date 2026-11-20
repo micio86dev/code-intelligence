@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, symlinkSync } from "node:fs";
 import { join } from "node:path";
 import { after, before, test } from "node:test";
 import { OFFLINE, runCli } from "../e2e/helpers.ts";
@@ -153,4 +153,24 @@ test("bad usage: --all and mixing files with scope flags exit 2", () => {
   assert.equal(runCli(["mutate", "src/a.js", "--staged"], process.cwd()).code, 2);
   assert.equal(runCli(["mutate", "../../etc/passwd"], process.cwd()).code, 2);
   assert.equal(runCli(["scan", "stray-arg"], process.cwd()).code, 2);
+});
+
+test("mutate rejects symlinks and option-looking file arguments (verifier notes)", {
+  skip: process.platform === "win32",
+}, () => {
+  const outside = makeProject({ "secret.js": "export const s = 1;\n" }, { git: false });
+  const q = makeProject({ "a.js": "export const a = 1;\n" });
+  try {
+    q.commit();
+    symlinkSync(join(outside.dir, "secret.js"), join(q.dir, "link.js"));
+    assert.equal(
+      runCli(["mutate", "link.js"], q.dir).code,
+      2,
+      "a symlink to a file outside the repository is refused",
+    );
+    assert.equal(runCli(["mutate", "nope.js"], q.dir).code, 2);
+  } finally {
+    q.cleanup();
+    outside.cleanup();
+  }
 });

@@ -58,6 +58,9 @@ Options:
       --timeout <ms>       Per-engine time limit (default depends on profile)
       --allow-missing      Do not treat a missing engine as an incomplete scan
       --no-cache           Do not read or write cached engine results
+      --ignore-repo-config Ignore the repository's own configuration (.code-intel.json, .gitleaks.toml,
+                           .gitleaksignore, baseline). Use it when scanning code you do not trust:
+                           a hostile repository can configure a scan to find nothing
 `;
 
 const IMPACT_HELP = `Usage: code-intel impact [--changed | --staged | --since <ref>] [--json]
@@ -113,6 +116,7 @@ function parse(rest: string[]) {
       timeout: { type: "string" },
       "allow-missing": { type: "boolean" },
       "no-cache": { type: "boolean" },
+      "ignore-repo-config": { type: "boolean" },
       json: { type: "boolean" },
       "min-score": { type: "string" },
     },
@@ -283,6 +287,7 @@ export async function main(argv: string[], io: Io): Promise<number> {
           timeoutMs,
           cache: !v["no-cache"],
           newOnly: isBaseline ? false : Boolean(v["new-only"]),
+          ignoreRepoConfig: Boolean(v["ignore-repo-config"]),
           allowMissing: Boolean(v["allow-missing"]),
           log,
         });

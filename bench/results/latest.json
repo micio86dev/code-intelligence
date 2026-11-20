@@ -1,0 +1,2510 @@
+{
+  "generatedAt": "2026-11-19",
+  "machine": {
+    "os": "darwin 27.2.0",
+    "cpus": 18,
+    "cpuModel": "Apple M5 Max",
+    "memGB": 36
+  },
+  "node": "v24.18.0",
+  "runsPerScenario": 3,
+  "tools": {
+    "gitleaks": "8.30.1",
+    "semgrep": "1.186.0",
+    "osv-scanner": "osv-scanner version: 2.7.1"
+  },
+  "repos": {
+    "self": {
+      "kind": "small (TypeScript)",
+      "commit": "6d70d25",
+      "trackedFiles": 55,
+      "loadAvg1mAtStart": 16.17,
+      "manualSequentialFullScan": {
+        "wallMs": {
+          "runs": [2560, 2533, 2562],
+          "median": 2560,
+          "min": 2533,
+          "max": 2562
+        },
+        "perToolMedianMs": {
+          "gitleaks": 29,
+          "semgrep": 2071,
+          "osv-scanner": 444
+        },
+        "peakRssMb": {
+          "gitleaks": 50,
+          "semgrep": 387,
+          "osv-scanner": 55
+        },
+        "findings": {
+          "gitleaks": 0,
+          "semgrep": 0,
+          "osv-scanner": 0
+        }
+      },
+      "codeIntelFullCold": {
+        "wallMs": {
+          "runs": [2922, 2941, 3166],
+          "median": 2941,
+          "min": 2922,
+          "max": 3166
+        },
+        "peakRssMb": 380,
+        "complete": true,
+        "exitCode": 0,
+        "findings": 0,
+        "bySeverity": {
+          "info": 0,
+          "low": 0,
+          "medium": 0,
+          "high": 0,
+          "critical": 0
+        },
+        "engines": {
+          "gitleaks": {
+            "status": "ok",
+            "ms": 46,
+            "findings": 0,
+            "cached": false,
+            "warnings": 0
+          },
+          "semgrep": {
+            "status": "ok",
+            "ms": 2317,
+            "findings": 0,
+            "cached": false,
+            "warnings": 0
+          },
+          "osv-scanner": {
+            "status": "ok",
+            "ms": 448,
+            "findings": 0,
+            "cached": false,
+            "warnings": 0
+          }
+        },
+        "sumEngineMs": 2811
+      },
+      "findingList": [],
+      "codeIntelFullWarm": {
+        "wallMs": {
+          "runs": [2888, 2859, 3395],
+          "median": 2888,
+          "min": 2859,
+          "max": 3395
+        },
+        "complete": true,
+        "exitCode": 0,
+        "findings": 0,
+        "bySeverity": {
+          "info": 0,
+          "low": 0,
+          "medium": 0,
+          "high": 0,
+          "critical": 0
+        },
+        "engines": {
+          "gitleaks": {
+            "status": "ok",
+            "ms": 2,
+            "findings": 0,
+            "cached": true,
+            "warnings": 0
+          },
+          "semgrep": {
+            "status": "ok",
+            "ms": 2543,
+            "findings": 0,
+            "cached": false,
+            "warnings": 0
+          },
+          "osv-scanner": {
+            "status": "ok",
+            "ms": 473,
+            "findings": 0,
+            "cached": false,
+            "warnings": 0
+          }
+        },
+        "sumEngineMs": 3018
+      },
+      "codeIntelIncrementalOneFile": {
+        "file": "src/cli.ts",
+        "wallMs": {
+          "runs": [2802, 2970, 2673],
+          "median": 2802,
+          "min": 2673,
+          "max": 2970
+        },
+        "peakRssMb": 295,
+        "complete": true,
+        "exitCode": 0,
+        "findings": 0,
+        "bySeverity": {
+          "info": 0,
+          "low": 0,
+          "medium": 0,
+          "high": 0,
+          "critical": 0
+        },
+        "engines": {
+          "gitleaks": {
+            "status": "ok",
+            "ms": 20,
+            "findings": 0,
+            "cached": false,
+            "warnings": 0
+          },
+          "semgrep": {
+            "status": "ok",
+            "ms": 1871,
+            "findings": 0,
+            "cached": false,
+            "warnings": 0
+          },
+          "osv-scanner": {
+            "status": "skipped",
+            "ms": 0,
+            "findings": 0,
+            "cached": false,
+            "warnings": 0
+          }
+        },
+        "sumEngineMs": 1891
+      },
+      "loadAvg1mAtEnd": 14.55
+    },
+    "express": {
+      "kind": "medium (JavaScript)",
+      "commit": "43fca52",
+      "trackedFiles": 216,
+      "loadAvg1mAtStart": 14.55,
+      "manualSequentialFullScan": {
+        "wallMs": {
+          "runs": [2403, 2405, 2510],
+          "median": 2405,
+          "min": 2403,
+          "max": 2510
+        },
+        "perToolMedianMs": {
+          "gitleaks": 66,
+          "semgrep": 2298,
+          "osv-scanner": 41
+        },
+        "peakRssMb": {
+          "gitleaks": 62,
+          "semgrep": 394,
+          "osv-scanner": 49
+        },
+        "findings": {
+          "gitleaks": 0,
+          "semgrep": 45,
+          "osv-scanner": null
+        }
+      },
+      "codeIntelFullCold": {
+        "wallMs": {
+          "runs": [3320, 3284, 3267],
+          "median": 3284,
+          "min": 3267,
+          "max": 3320
+        },
+        "peakRssMb": 393,
+        "complete": true,
+        "exitCode": 0,
+        "findings": 45,
+        "bySeverity": {
+          "info": 0,
+          "low": 1,
+          "medium": 44,
+          "high": 0,
+          "critical": 0
+        },
+        "engines": {
+          "gitleaks": {
+            "status": "ok",
+            "ms": 130,
+            "findings": 0,
+            "cached": false,
+            "warnings": 0
+          },
+          "semgrep": {
+            "status": "findings",
+            "ms": 2381,
+            "findings": 45,
+            "cached": false,
+            "warnings": 1
+          },
+          "osv-scanner": {
+            "status": "skipped",
+            "ms": 0,
+            "findings": 0,
+            "cached": false,
+            "warnings": 0
+          }
+        },
+        "sumEngineMs": 2511
+      },
+      "findingList": [
+        {
+          "engine": "semgrep",
+          "ruleId": "package_managers.dependabot.dependabot-missing-cooldown.dependabot-missing-cooldown",
+          "severity": "medium",
+          "file": ".github/dependabot.yml",
+          "line": 3
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "package_managers.dependabot.dependabot-missing-cooldown.dependabot-missing-cooldown",
+          "severity": "medium",
+          "file": ".github/dependabot.yml",
+          "line": 12
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-default-name",
+          "severity": "medium",
+          "file": "examples/auth/index.js",
+          "line": 22
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-no-domain",
+          "severity": "medium",
+          "file": "examples/auth/index.js",
+          "line": 22
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-no-expires",
+          "severity": "medium",
+          "file": "examples/auth/index.js",
+          "line": 22
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-no-httponly",
+          "severity": "medium",
+          "file": "examples/auth/index.js",
+          "line": 22
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-no-path",
+          "severity": "medium",
+          "file": "examples/auth/index.js",
+          "line": 22
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-no-secure",
+          "severity": "medium",
+          "file": "examples/auth/index.js",
+          "line": 22
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-session-hardcoded-secret.express-session-hardcoded-secret",
+          "severity": "medium",
+          "file": "examples/auth/index.js",
+          "line": 25
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.xss.ejs.explicit-unescape.template-explicit-unescape",
+          "severity": "medium",
+          "file": "examples/auth/views/login.ejs",
+          "line": 5
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-default-name",
+          "severity": "medium",
+          "file": "examples/cookie-sessions/index.js",
+          "line": 13
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-no-domain",
+          "severity": "medium",
+          "file": "examples/cookie-sessions/index.js",
+          "line": 13
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-no-expires",
+          "severity": "medium",
+          "file": "examples/cookie-sessions/index.js",
+          "line": 13
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-no-httponly",
+          "severity": "medium",
+          "file": "examples/cookie-sessions/index.js",
+          "line": 13
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-no-path",
+          "severity": "medium",
+          "file": "examples/cookie-sessions/index.js",
+          "line": 13
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-no-secure",
+          "severity": "medium",
+          "file": "examples/cookie-sessions/index.js",
+          "line": 13
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-default-name",
+          "severity": "medium",
+          "file": "examples/mvc/index.js",
+          "line": 40
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-no-domain",
+          "severity": "medium",
+          "file": "examples/mvc/index.js",
+          "line": 40
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-no-expires",
+          "severity": "medium",
+          "file": "examples/mvc/index.js",
+          "line": 40
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-no-httponly",
+          "severity": "medium",
+          "file": "examples/mvc/index.js",
+          "line": 40
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-no-path",
+          "severity": "medium",
+          "file": "examples/mvc/index.js",
+          "line": 40
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-no-secure",
+          "severity": "medium",
+          "file": "examples/mvc/index.js",
+          "line": 40
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-session-hardcoded-secret.express-session-hardcoded-secret",
+          "severity": "medium",
+          "file": "examples/mvc/index.js",
+          "line": 43
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+          "severity": "medium",
+          "file": "examples/params/index.js",
+          "line": 67
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+          "severity": "medium",
+          "file": "examples/resource/index.js",
+          "line": 46
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+          "severity": "medium",
+          "file": "examples/route-map/index.js",
+          "line": 37
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+          "severity": "medium",
+          "file": "examples/route-map/index.js",
+          "line": 47
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+          "severity": "medium",
+          "file": "examples/route-map/index.js",
+          "line": 51
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-default-name",
+          "severity": "medium",
+          "file": "examples/session/index.js",
+          "line": 16
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-no-domain",
+          "severity": "medium",
+          "file": "examples/session/index.js",
+          "line": 16
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-no-expires",
+          "severity": "medium",
+          "file": "examples/session/index.js",
+          "line": 16
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-no-httponly",
+          "severity": "medium",
+          "file": "examples/session/index.js",
+          "line": 16
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-no-path",
+          "severity": "medium",
+          "file": "examples/session/index.js",
+          "line": 16
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-no-secure",
+          "severity": "medium",
+          "file": "examples/session/index.js",
+          "line": 16
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-session-hardcoded-secret.express-session-hardcoded-secret",
+          "severity": "medium",
+          "file": "examples/session/index.js",
+          "line": 19
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-default-name",
+          "severity": "medium",
+          "file": "examples/session/redis.js",
+          "line": 20
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-no-domain",
+          "severity": "medium",
+          "file": "examples/session/redis.js",
+          "line": 20
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-no-expires",
+          "severity": "medium",
+          "file": "examples/session/redis.js",
+          "line": 20
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-no-httponly",
+          "severity": "medium",
+          "file": "examples/session/redis.js",
+          "line": 20
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-no-path",
+          "severity": "medium",
+          "file": "examples/session/redis.js",
+          "line": 20
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-cookie-settings.express-cookie-session-no-secure",
+          "severity": "medium",
+          "file": "examples/session/redis.js",
+          "line": 20
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-session-hardcoded-secret.express-session-hardcoded-secret",
+          "severity": "medium",
+          "file": "examples/session/redis.js",
+          "line": 23
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+          "severity": "medium",
+          "file": "examples/vhost/index.js",
+          "line": 30
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+          "severity": "medium",
+          "file": "examples/web-service/index.js",
+          "line": 89
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.lang.security.audit.unsafe-formatstring.unsafe-formatstring",
+          "severity": "low",
+          "file": "examples/search/index.js",
+          "line": 57
+        }
+      ],
+      "codeIntelFullWarm": {
+        "wallMs": {
+          "runs": [3182, 3405, 3803],
+          "median": 3405,
+          "min": 3182,
+          "max": 3803
+        },
+        "complete": true,
+        "exitCode": 0,
+        "findings": 45,
+        "bySeverity": {
+          "info": 0,
+          "low": 1,
+          "medium": 44,
+          "high": 0,
+          "critical": 0
+        },
+        "engines": {
+          "gitleaks": {
+            "status": "ok",
+            "ms": 10,
+            "findings": 0,
+            "cached": true,
+            "warnings": 0
+          },
+          "semgrep": {
+            "status": "findings",
+            "ms": 2687,
+            "findings": 45,
+            "cached": false,
+            "warnings": 1
+          },
+          "osv-scanner": {
+            "status": "skipped",
+            "ms": 0,
+            "findings": 0,
+            "cached": false,
+            "warnings": 0
+          }
+        },
+        "sumEngineMs": 2697
+      },
+      "codeIntelIncrementalOneFile": {
+        "file": "examples/auth/index.js",
+        "wallMs": {
+          "runs": [2763, 2742, 2860],
+          "median": 2763,
+          "min": 2742,
+          "max": 2860
+        },
+        "peakRssMb": 298,
+        "complete": true,
+        "exitCode": 0,
+        "findings": 0,
+        "bySeverity": {
+          "info": 0,
+          "low": 0,
+          "medium": 0,
+          "high": 0,
+          "critical": 0
+        },
+        "engines": {
+          "gitleaks": {
+            "status": "ok",
+            "ms": 20,
+            "findings": 0,
+            "cached": false,
+            "warnings": 0
+          },
+          "semgrep": {
+            "status": "findings",
+            "ms": 2033,
+            "findings": 7,
+            "cached": false,
+            "warnings": 0
+          },
+          "osv-scanner": {
+            "status": "skipped",
+            "ms": 0,
+            "findings": 0,
+            "cached": false,
+            "warnings": 0
+          }
+        },
+        "sumEngineMs": 2053
+      },
+      "loadAvg1mAtEnd": 12.87
+    },
+    "flask": {
+      "kind": "medium (Python)",
+      "commit": "49943b5",
+      "trackedFiles": 236,
+      "loadAvg1mAtStart": 12.87,
+      "manualSequentialFullScan": {
+        "wallMs": {
+          "runs": [8256, 7762, 7788],
+          "median": 7788,
+          "min": 7762,
+          "max": 8256
+        },
+        "perToolMedianMs": {
+          "gitleaks": 99,
+          "semgrep": 2526,
+          "osv-scanner": 5164
+        },
+        "peakRssMb": {
+          "gitleaks": 68,
+          "semgrep": 419,
+          "osv-scanner": 79
+        },
+        "findings": {
+          "gitleaks": 6,
+          "semgrep": 16,
+          "osv-scanner": 53
+        }
+      },
+      "codeIntelFullCold": {
+        "wallMs": {
+          "runs": [6117, 5509, 5802],
+          "median": 5802,
+          "min": 5509,
+          "max": 6117
+        },
+        "peakRssMb": 419,
+        "complete": true,
+        "exitCode": 1,
+        "findings": 75,
+        "bySeverity": {
+          "info": 0,
+          "low": 4,
+          "medium": 42,
+          "high": 27,
+          "critical": 2
+        },
+        "engines": {
+          "gitleaks": {
+            "status": "findings",
+            "ms": 172,
+            "findings": 6,
+            "cached": false,
+            "warnings": 0
+          },
+          "semgrep": {
+            "status": "findings",
+            "ms": 2464,
+            "findings": 16,
+            "cached": false,
+            "warnings": 1
+          },
+          "osv-scanner": {
+            "status": "findings",
+            "ms": 4948,
+            "findings": 53,
+            "cached": false,
+            "warnings": 0
+          }
+        },
+        "sumEngineMs": 7584
+      },
+      "findingList": [
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-4320",
+          "severity": "critical",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-4321",
+          "severity": "critical",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "docs/config.rst",
+          "line": 41
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "docs/config.rst",
+          "line": 513
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "docs/config.rst",
+          "line": 560
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "docs/config.rst",
+          "line": 578
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "docs/config.rst",
+          "line": 587
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "docs/tutorial/deploy.rst",
+          "line": 73
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2023-221",
+          "severity": "high",
+          "file": "examples/celery/requirements.txt",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-1472",
+          "severity": "high",
+          "file": "examples/celery/requirements.txt",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-1475",
+          "severity": "high",
+          "file": "examples/celery/requirements.txt",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-2043",
+          "severity": "high",
+          "file": "examples/celery/requirements.txt",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-3417",
+          "severity": "high",
+          "file": "examples/celery/requirements.txt",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "GHSA-v4x8-3wr5-3wq8",
+          "severity": "high",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-3552",
+          "severity": "high",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-4011",
+          "severity": "high",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-4013",
+          "severity": "high",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-4014",
+          "severity": "high",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-4175",
+          "severity": "high",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-4177",
+          "severity": "high",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-4374",
+          "severity": "high",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-4377",
+          "severity": "high",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-4379",
+          "severity": "high",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-4381",
+          "severity": "high",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-4382",
+          "severity": "high",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-4384",
+          "severity": "high",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-4385",
+          "severity": "high",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-4386",
+          "severity": "high",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-4387",
+          "severity": "high",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-1471",
+          "severity": "medium",
+          "file": "examples/celery/requirements.txt",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-1473",
+          "severity": "medium",
+          "file": "examples/celery/requirements.txt",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-1474",
+          "severity": "medium",
+          "file": "examples/celery/requirements.txt",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-2044",
+          "severity": "medium",
+          "file": "examples/celery/requirements.txt",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-2045",
+          "severity": "medium",
+          "file": "examples/celery/requirements.txt",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-2046",
+          "severity": "medium",
+          "file": "examples/celery/requirements.txt",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-2151",
+          "severity": "medium",
+          "file": "examples/celery/requirements.txt",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-2320",
+          "severity": "medium",
+          "file": "examples/celery/requirements.txt",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-4312",
+          "severity": "medium",
+          "file": "examples/celery/requirements.txt",
+          "line": null
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "python.django.security.django-no-csrf-token.django-no-csrf-token",
+          "severity": "medium",
+          "file": "examples/celery/src/task_app/templates/index.html",
+          "line": 14
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "python.django.security.django-no-csrf-token.django-no-csrf-token",
+          "severity": "medium",
+          "file": "examples/celery/src/task_app/templates/index.html",
+          "line": 24
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "python.django.security.django-no-csrf-token.django-no-csrf-token",
+          "severity": "medium",
+          "file": "examples/celery/src/task_app/templates/index.html",
+          "line": 32
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "html.security.audit.missing-integrity.missing-integrity",
+          "severity": "medium",
+          "file": "examples/javascript/js_example/templates/base.html",
+          "line": 3
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "html.security.audit.missing-integrity.missing-integrity",
+          "severity": "medium",
+          "file": "examples/javascript/js_example/templates/base.html",
+          "line": 4
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "html.security.audit.missing-integrity.missing-integrity",
+          "severity": "medium",
+          "file": "examples/javascript/js_example/templates/jquery.html",
+          "line": 10
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "python.django.security.django-no-csrf-token.django-no-csrf-token",
+          "severity": "medium",
+          "file": "examples/tutorial/flaskr/templates/auth/login.html",
+          "line": 8
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "python.django.security.django-no-csrf-token.django-no-csrf-token",
+          "severity": "medium",
+          "file": "examples/tutorial/flaskr/templates/auth/register.html",
+          "line": 8
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "python.django.security.django-no-csrf-token.django-no-csrf-token",
+          "severity": "medium",
+          "file": "examples/tutorial/flaskr/templates/blog/create.html",
+          "line": 8
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "python.django.security.django-no-csrf-token.django-no-csrf-token",
+          "severity": "medium",
+          "file": "examples/tutorial/flaskr/templates/blog/update.html",
+          "line": 8
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "python.django.security.django-no-csrf-token.django-no-csrf-token",
+          "severity": "medium",
+          "file": "examples/tutorial/flaskr/templates/blog/update.html",
+          "line": 16
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "package_managers.uv.uv-missing-dependency-cooldown.uv-missing-dependency-cooldown",
+          "severity": "medium",
+          "file": "pyproject.toml",
+          "line": 103
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "python.lang.security.audit.eval-detected.eval-detected",
+          "severity": "medium",
+          "file": "src/flask/cli.py",
+          "line": 1022
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "python.lang.security.audit.exec-detected.exec-detected",
+          "severity": "medium",
+          "file": "src/flask/config.py",
+          "line": 209
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "python.flask.security.xss.audit.explicit-unescape-with-markup.explicit-unescape-with-markup",
+          "severity": "medium",
+          "file": "src/flask/json/tag.py",
+          "line": 188
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "python.lang.security.insecure-hash-algorithms.insecure-hash-algorithm-sha1",
+          "severity": "medium",
+          "file": "src/flask/sessions.py",
+          "line": 281
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "GHSA-43mp-35q3-x3fq",
+          "severity": "medium",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "GHSA-6627-m3xw-93mp",
+          "severity": "medium",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "GHSA-69hj-f68j-2879",
+          "severity": "medium",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "GHSA-8mx5-7m5m-r77g",
+          "severity": "medium",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "GHSA-9c4x-gm8v-wgc4",
+          "severity": "medium",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "GHSA-cwqr-hh33-gh44",
+          "severity": "medium",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "GHSA-fq56-3cx3-fjxp",
+          "severity": "medium",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "GHSA-j8f7-rjxc-mr56",
+          "severity": "medium",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "GHSA-m462-7rxw-wvpg",
+          "severity": "medium",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "GHSA-rfpc-qcw5-3pc4",
+          "severity": "medium",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-4012",
+          "severity": "medium",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-4176",
+          "severity": "medium",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-4312",
+          "severity": "medium",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-4372",
+          "severity": "medium",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-4375",
+          "severity": "medium",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-4378",
+          "severity": "medium",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "PYSEC-2026-4380",
+          "severity": "medium",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "GHSA-494p-63j8-28p3",
+          "severity": "low",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "GHSA-567q-5qvw-pf92",
+          "severity": "low",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "GHSA-9vhv-jxww-xfm5",
+          "severity": "low",
+          "file": "uv.lock",
+          "line": null
+        },
+        {
+          "engine": "osv-scanner",
+          "ruleId": "GHSA-cx28-75q4-x26q",
+          "severity": "low",
+          "file": "uv.lock",
+          "line": null
+        }
+      ],
+      "codeIntelFullWarm": {
+        "wallMs": {
+          "runs": [5395, 19361, 19352],
+          "median": 19352,
+          "min": 5395,
+          "max": 19361
+        },
+        "complete": true,
+        "exitCode": 1,
+        "findings": 75,
+        "bySeverity": {
+          "info": 0,
+          "low": 4,
+          "medium": 42,
+          "high": 27,
+          "critical": 2
+        },
+        "engines": {
+          "gitleaks": {
+            "status": "findings",
+            "ms": 7,
+            "findings": 6,
+            "cached": true,
+            "warnings": 0
+          },
+          "semgrep": {
+            "status": "findings",
+            "ms": 2253,
+            "findings": 16,
+            "cached": false,
+            "warnings": 1
+          },
+          "osv-scanner": {
+            "status": "findings",
+            "ms": 18649,
+            "findings": 53,
+            "cached": false,
+            "warnings": 0
+          }
+        },
+        "sumEngineMs": 20909
+      },
+      "codeIntelIncrementalOneFile": {
+        "file": "docs/conf.py",
+        "wallMs": {
+          "runs": [2297, 2248, 2252],
+          "median": 2252,
+          "min": 2248,
+          "max": 2297
+        },
+        "peakRssMb": 301,
+        "complete": true,
+        "exitCode": 0,
+        "findings": 0,
+        "bySeverity": {
+          "info": 0,
+          "low": 0,
+          "medium": 0,
+          "high": 0,
+          "critical": 0
+        },
+        "engines": {
+          "gitleaks": {
+            "status": "ok",
+            "ms": 19,
+            "findings": 0,
+            "cached": false,
+            "warnings": 0
+          },
+          "semgrep": {
+            "status": "ok",
+            "ms": 1615,
+            "findings": 0,
+            "cached": false,
+            "warnings": 1
+          },
+          "osv-scanner": {
+            "status": "skipped",
+            "ms": 0,
+            "findings": 0,
+            "cached": false,
+            "warnings": 0
+          }
+        },
+        "sumEngineMs": 1634
+      },
+      "loadAvg1mAtEnd": 5.44
+    },
+    "juice-shop": {
+      "kind": "large, multi-language, intentionally vulnerable (TypeScript/JavaScript/HTML/YAML)",
+      "commit": "c9f9922",
+      "trackedFiles": 1498,
+      "loadAvg1mAtStart": 5.44,
+      "manualSequentialFullScan": {
+        "wallMs": {
+          "runs": [17196, 18224, 17493],
+          "median": 17493,
+          "min": 17196,
+          "max": 18224
+        },
+        "perToolMedianMs": {
+          "gitleaks": 1305,
+          "semgrep": 16061,
+          "osv-scanner": 59
+        },
+        "peakRssMb": {
+          "gitleaks": 115,
+          "semgrep": 951,
+          "osv-scanner": 53
+        },
+        "findings": {
+          "gitleaks": 75,
+          "semgrep": 71,
+          "osv-scanner": null
+        }
+      },
+      "codeIntelFullCold": {
+        "wallMs": {
+          "runs": [17514, 32281, 17578],
+          "median": 17578,
+          "min": 17514,
+          "max": 32281
+        },
+        "peakRssMb": 926,
+        "complete": true,
+        "exitCode": 1,
+        "findings": 140,
+        "bySeverity": {
+          "info": 0,
+          "low": 2,
+          "medium": 48,
+          "high": 90,
+          "critical": 0
+        },
+        "engines": {
+          "gitleaks": {
+            "status": "findings",
+            "ms": 1649,
+            "findings": 75,
+            "cached": false,
+            "warnings": 0
+          },
+          "semgrep": {
+            "status": "findings",
+            "ms": 16581,
+            "findings": 71,
+            "cached": false,
+            "warnings": 1
+          },
+          "osv-scanner": {
+            "status": "skipped",
+            "ms": 0,
+            "findings": 0,
+            "cached": false,
+            "warnings": 0
+          }
+        },
+        "sumEngineMs": 18230
+      },
+      "findingList": [
+        {
+          "engine": "semgrep",
+          "ruleId": "yaml.github-actions.security.gha-curl-pipe-shell.gha-curl-pipe-shell",
+          "severity": "high",
+          "file": ".github/workflows/ci.yml",
+          "line": 353
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "yaml.github-actions.security.run-shell-injection.run-shell-injection",
+          "severity": "high",
+          "file": ".github/workflows/update-challenges-ebook.yml",
+          "line": 23
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "yaml.github-actions.security.run-shell-injection.run-shell-injection",
+          "severity": "high",
+          "file": ".github/workflows/update-challenges-ebook.yml",
+          "line": 28
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "yaml.github-actions.security.run-shell-injection.run-shell-injection",
+          "severity": "high",
+          "file": ".github/workflows/update-challenges-www-legacy.yml",
+          "line": 27
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "yaml.github-actions.security.run-shell-injection.run-shell-injection",
+          "severity": "high",
+          "file": ".github/workflows/update-challenges-www-legacy.yml",
+          "line": 36
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "yaml.github-actions.security.run-shell-injection.run-shell-injection",
+          "severity": "high",
+          "file": ".github/workflows/update-challenges-www.yml",
+          "line": 28
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "yaml.github-actions.security.run-shell-injection.run-shell-injection",
+          "severity": "high",
+          "file": ".github/workflows/update-challenges-www.yml",
+          "line": 37
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "yaml.github-actions.security.run-shell-injection.run-shell-injection",
+          "severity": "high",
+          "file": ".github/workflows/update-challenges-www.yml",
+          "line": 46
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.sequelize.security.audit.sequelize-injection-express.express-sequelize-injection",
+          "severity": "high",
+          "file": "data/static/codefixes/dbSchemaChallenge_1.ts",
+          "line": 5
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.sequelize.security.audit.sequelize-injection-express.express-sequelize-injection",
+          "severity": "high",
+          "file": "data/static/codefixes/dbSchemaChallenge_3.ts",
+          "line": 11
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.sequelize.security.audit.sequelize-injection-express.express-sequelize-injection",
+          "severity": "high",
+          "file": "data/static/codefixes/unionSqlInjectionChallenge_1.ts",
+          "line": 6
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.sequelize.security.audit.sequelize-injection-express.express-sequelize-injection",
+          "severity": "high",
+          "file": "data/static/codefixes/unionSqlInjectionChallenge_3.ts",
+          "line": 10
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "data/static/users.yml",
+          "line": 88
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "data/static/users.yml",
+          "line": 151
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "data/static/users.yml",
+          "line": 296
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "jwt",
+          "severity": "high",
+          "file": "frontend/src/app/app.guard.spec.ts",
+          "line": 46
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "frontend/src/app/faucet/faucet.component.ts",
+          "line": 34
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "jwt",
+          "severity": "high",
+          "file": "frontend/src/app/last-login-ip/last-login-ip.component.spec.ts",
+          "line": 72
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "frontend/src/app/last-login-ip/last-login-ip.component.spec.ts",
+          "line": 78
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "frontend/src/app/manage-passkeys/passkey-providers.ts",
+          "line": 9
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "frontend/src/app/manage-passkeys/passkey-providers.ts",
+          "line": 11
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "frontend/src/app/manage-passkeys/passkey-providers.ts",
+          "line": 20
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "frontend/src/app/oauth/oauth.component.spec.ts",
+          "line": 91
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "frontend/src/app/oauth/oauth.component.spec.ts",
+          "line": 98
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "private-key",
+          "severity": "high",
+          "file": "infrastructure/terraform/networking.tf",
+          "line": 171
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "private-key",
+          "severity": "high",
+          "file": "lib/insecurity.ts",
+          "line": 21
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.remote-property-injection.remote-property-injection",
+          "severity": "high",
+          "file": "routes/currentUser.ts",
+          "line": 31
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.sequelize.security.audit.sequelize-injection-express.express-sequelize-injection",
+          "severity": "high",
+          "file": "routes/login.ts",
+          "line": 34
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "routes/login.ts",
+          "line": 64
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.sequelize.security.audit.sequelize-injection-express.express-sequelize-injection",
+          "severity": "high",
+          "file": "routes/search.ts",
+          "line": 23
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.lang.security.audit.code-string-concat.code-string-concat",
+          "severity": "high",
+          "file": "routes/userProfile.ts",
+          "line": 65
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "private-key",
+          "severity": "high",
+          "file": "terraform/networking.tf",
+          "line": 171
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/2fa.test.ts",
+          "line": 42
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/2fa.test.ts",
+          "line": 66
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/2fa.test.ts",
+          "line": 85
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/2fa.test.ts",
+          "line": 104
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/2fa.test.ts",
+          "line": 123
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/2fa.test.ts",
+          "line": 142
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/2fa.test.ts",
+          "line": 182
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/2fa.test.ts",
+          "line": 214
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/2fa.test.ts",
+          "line": 240
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/2fa.test.ts",
+          "line": 257
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/2fa.test.ts",
+          "line": 266
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/2fa.test.ts",
+          "line": 292
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/2fa.test.ts",
+          "line": 317
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/2fa.test.ts",
+          "line": 352
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/2fa.test.ts",
+          "line": 379
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/2fa.test.ts",
+          "line": 412
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/basket.test.ts",
+          "line": 115
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/basket.test.ts",
+          "line": 241
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/chat.test.ts",
+          "line": 277
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/checkKeys.test.ts",
+          "line": 46
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/checkKeys.test.ts",
+          "line": 57
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/checkKeys.test.ts",
+          "line": 68
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/data-export.test.ts",
+          "line": 53
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/data-export.test.ts",
+          "line": 73
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/data-export.test.ts",
+          "line": 90
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/data-export.test.ts",
+          "line": 110
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/erasure-request.test.ts",
+          "line": 36
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/erasure-request.test.ts",
+          "line": 55
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/erasure-request.test.ts",
+          "line": 68
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/erasure-request.test.ts",
+          "line": 82
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/erasure-request.test.ts",
+          "line": 94
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/erasure-request.test.ts",
+          "line": 106
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/feedback.test.ts",
+          "line": 117
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/feedback.test.ts",
+          "line": 143
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/helpers/passkey.ts",
+          "line": 56
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/login.test.ts",
+          "line": 147
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/login.test.ts",
+          "line": 245
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/login.test.ts",
+          "line": 267
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/passkey.test.ts",
+          "line": 21
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/product-review.test.ts",
+          "line": 170
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/product-review.test.ts",
+          "line": 184
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/user.test.ts",
+          "line": 240
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/user.test.ts",
+          "line": 280
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "jwt",
+          "severity": "high",
+          "file": "test/api/user.test.ts",
+          "line": 280
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/user.test.ts",
+          "line": 289
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/user.test.ts",
+          "line": 304
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/api/user.test.ts",
+          "line": 318
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "jwt",
+          "severity": "high",
+          "file": "test/cypress/e2e/forgedJwt.spec.ts",
+          "line": 7
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "jwt",
+          "severity": "high",
+          "file": "test/cypress/e2e/forgedJwt.spec.ts",
+          "line": 22
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "jwt",
+          "severity": "high",
+          "file": "test/cypress/e2e/forgedJwt.spec.ts",
+          "line": 38
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/cypress/e2e/login.spec.ts",
+          "line": 126
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "generic-api-key",
+          "severity": "high",
+          "file": "test/cypress/e2e/totpSetup.spec.ts",
+          "line": 7
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "jwt",
+          "severity": "high",
+          "file": "test/server/currentUser.unit.test.ts",
+          "line": 40
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "jwt",
+          "severity": "high",
+          "file": "test/server/currentUser.unit.test.ts",
+          "line": 43
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "jwt",
+          "severity": "high",
+          "file": "test/server/verify.unit.test.ts",
+          "line": 283
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "jwt",
+          "severity": "high",
+          "file": "test/server/verify.unit.test.ts",
+          "line": 291
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "jwt",
+          "severity": "high",
+          "file": "test/server/verify.unit.test.ts",
+          "line": 308
+        },
+        {
+          "engine": "gitleaks",
+          "ruleId": "jwt",
+          "severity": "high",
+          "file": "test/server/verify.unit.test.ts",
+          "line": 316
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "yaml.github-actions.security.github-actions-mutable-action-tag.github-actions-mutable-action-tag",
+          "severity": "medium",
+          "file": ".github/workflows/ci.yml",
+          "line": 198
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "yaml.github-actions.security.github-actions-mutable-action-tag.github-actions-mutable-action-tag",
+          "severity": "medium",
+          "file": ".github/workflows/codeql-analysis.yml",
+          "line": 23
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "yaml.github-actions.security.github-actions-mutable-action-tag.github-actions-mutable-action-tag",
+          "severity": "medium",
+          "file": ".github/workflows/codeql-analysis.yml",
+          "line": 34
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "yaml.github-actions.security.github-actions-mutable-action-tag.github-actions-mutable-action-tag",
+          "severity": "medium",
+          "file": ".github/workflows/codeql-analysis.yml",
+          "line": 36
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "yaml.github-actions.security.github-actions-mutable-action-tag.github-actions-mutable-action-tag",
+          "severity": "medium",
+          "file": ".github/workflows/image_actions.yml",
+          "line": 30
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "yaml.github-actions.security.github-actions-mutable-action-tag.github-actions-mutable-action-tag",
+          "severity": "medium",
+          "file": ".github/workflows/image_actions.yml",
+          "line": 33
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "yaml.github-actions.security.github-actions-mutable-action-tag.github-actions-mutable-action-tag",
+          "severity": "medium",
+          "file": ".github/workflows/image_actions.yml",
+          "line": 42
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "package_managers.npm.npm-missing-minimum-release-age.npm-missing-minimum-release-age",
+          "severity": "medium",
+          "file": ".npmrc",
+          "line": 1
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "terraform.aws.security.aws-subnet-has-public-ip-address.aws-subnet-has-public-ip-address",
+          "severity": "medium",
+          "file": "data/static/codefixes/iacLeakedKeyChallenge_1.tf",
+          "line": 17
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "terraform.aws.security.aws-elb-access-logs-not-enabled.aws-elb-access-logs-not-enabled",
+          "severity": "medium",
+          "file": "data/static/codefixes/iacLeakedKeyChallenge_1.tf",
+          "line": 121
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "terraform.aws.security.insecure-load-balancer-tls-version.insecure-load-balancer-tls-version",
+          "severity": "medium",
+          "file": "data/static/codefixes/iacLeakedKeyChallenge_1.tf",
+          "line": 159
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "terraform.aws.security.aws-subnet-has-public-ip-address.aws-subnet-has-public-ip-address",
+          "severity": "medium",
+          "file": "data/static/codefixes/iacLeakedKeyChallenge_2.tf",
+          "line": 17
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "terraform.aws.security.aws-elb-access-logs-not-enabled.aws-elb-access-logs-not-enabled",
+          "severity": "medium",
+          "file": "data/static/codefixes/iacLeakedKeyChallenge_2.tf",
+          "line": 121
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "terraform.aws.security.insecure-load-balancer-tls-version.insecure-load-balancer-tls-version",
+          "severity": "medium",
+          "file": "data/static/codefixes/iacLeakedKeyChallenge_2.tf",
+          "line": 159
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "terraform.aws.security.aws-subnet-has-public-ip-address.aws-subnet-has-public-ip-address",
+          "severity": "medium",
+          "file": "data/static/codefixes/iacLeakedKeyChallenge_3_correct.tf",
+          "line": 17
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "terraform.aws.security.aws-elb-access-logs-not-enabled.aws-elb-access-logs-not-enabled",
+          "severity": "medium",
+          "file": "data/static/codefixes/iacLeakedKeyChallenge_3_correct.tf",
+          "line": 121
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "terraform.aws.security.insecure-load-balancer-tls-version.insecure-load-balancer-tls-version",
+          "severity": "medium",
+          "file": "data/static/codefixes/iacLeakedKeyChallenge_3_correct.tf",
+          "line": 159
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "package_managers.npm.npm-missing-minimum-release-age.npm-missing-minimum-release-age",
+          "severity": "medium",
+          "file": "frontend/.npmrc",
+          "line": 1
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.lang.security.audit.prototype-pollution.prototype-pollution-loop.prototype-pollution-loop",
+          "severity": "medium",
+          "file": "frontend/src/hacking-instructor/helpers/helpers.ts",
+          "line": 49
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "terraform.aws.security.aws-cloudwatch-log-group-unencrypted.aws-cloudwatch-log-group-unencrypted",
+          "severity": "medium",
+          "file": "infrastructure/terraform/main.tf",
+          "line": 126
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "terraform.aws.security.aws-subnet-has-public-ip-address.aws-subnet-has-public-ip-address",
+          "severity": "medium",
+          "file": "infrastructure/terraform/networking.tf",
+          "line": 18
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "terraform.aws.security.aws-elb-access-logs-not-enabled.aws-elb-access-logs-not-enabled",
+          "severity": "medium",
+          "file": "infrastructure/terraform/networking.tf",
+          "line": 122
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "terraform.aws.security.insecure-load-balancer-tls-version.insecure-load-balancer-tls-version",
+          "severity": "medium",
+          "file": "infrastructure/terraform/networking.tf",
+          "line": 160
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "severity": "medium",
+          "file": "lib/antiCheat.ts",
+          "line": 202
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+          "severity": "medium",
+          "file": "lib/codingChallenges.ts",
+          "line": 77
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+          "severity": "medium",
+          "file": "lib/codingChallenges.ts",
+          "line": 79
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+          "severity": "medium",
+          "file": "lib/insecurity.ts",
+          "line": 42
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.jsonwebtoken.security.jwt-hardcode.hardcoded-jwt-secret",
+          "severity": "medium",
+          "file": "lib/insecurity.ts",
+          "line": 54
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+          "severity": "medium",
+          "file": "lib/insecurity.ts",
+          "line": 150
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+          "severity": "medium",
+          "file": "lib/utils.ts",
+          "line": 142
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.browser.security.eval-detected.eval-detected",
+          "severity": "medium",
+          "file": "routes/captcha.ts",
+          "line": 22
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-res-sendfile.express-res-sendfile",
+          "severity": "medium",
+          "file": "routes/fileServer.ts",
+          "line": 32
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-res-sendfile.express-res-sendfile",
+          "severity": "medium",
+          "file": "routes/keyServer.ts",
+          "line": 14
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-res-sendfile.express-res-sendfile",
+          "severity": "medium",
+          "file": "routes/logfileServer.ts",
+          "line": 14
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-res-sendfile.express-res-sendfile",
+          "severity": "medium",
+          "file": "routes/quarantineServer.ts",
+          "line": 14
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-open-redirect.express-open-redirect",
+          "severity": "medium",
+          "file": "routes/redirect.ts",
+          "line": 18
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.browser.security.eval-detected.eval-detected",
+          "severity": "medium",
+          "file": "routes/userProfile.ts",
+          "line": 65
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.lang.security.audit.unknown-value-with-script-tag.unknown-value-with-script-tag",
+          "severity": "medium",
+          "file": "routes/videoHandler.ts",
+          "line": 71
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-check-directory-listing.express-check-directory-listing",
+          "severity": "medium",
+          "file": "server.ts",
+          "line": 273
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-check-directory-listing.express-check-directory-listing",
+          "severity": "medium",
+          "file": "server.ts",
+          "line": 294
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-check-directory-listing.express-check-directory-listing",
+          "severity": "medium",
+          "file": "server.ts",
+          "line": 298
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-check-directory-listing.express-check-directory-listing",
+          "severity": "medium",
+          "file": "server.ts",
+          "line": 302
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.express-check-directory-listing.express-check-directory-listing",
+          "severity": "medium",
+          "file": "server.ts",
+          "line": 306
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "terraform.aws.security.aws-cloudwatch-log-group-unencrypted.aws-cloudwatch-log-group-unencrypted",
+          "severity": "medium",
+          "file": "terraform/main.tf",
+          "line": 126
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "terraform.aws.security.aws-subnet-has-public-ip-address.aws-subnet-has-public-ip-address",
+          "severity": "medium",
+          "file": "terraform/networking.tf",
+          "line": 18
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "terraform.aws.security.aws-elb-access-logs-not-enabled.aws-elb-access-logs-not-enabled",
+          "severity": "medium",
+          "file": "terraform/networking.tf",
+          "line": 122
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "terraform.aws.security.insecure-load-balancer-tls-version.insecure-load-balancer-tls-version",
+          "severity": "medium",
+          "file": "terraform/networking.tf",
+          "line": 160
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.express.security.audit.xss.pug.explicit-unescape.template-explicit-unescape",
+          "severity": "medium",
+          "file": "views/promotionVideo.pug",
+          "line": 75
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.audit.detect-replaceall-sanitization.detect-replaceall-sanitization",
+          "severity": "low",
+          "file": "data/static/codefixes/restfulXssChallenge_2.ts",
+          "line": 48
+        },
+        {
+          "engine": "semgrep",
+          "ruleId": "javascript.lang.security.audit.unsafe-formatstring.unsafe-formatstring",
+          "severity": "low",
+          "file": "server.ts",
+          "line": 159
+        }
+      ],
+      "codeIntelFullWarm": {
+        "wallMs": {
+          "runs": [17001, 17586, 16677],
+          "median": 17001,
+          "min": 16677,
+          "max": 17586
+        },
+        "complete": true,
+        "exitCode": 1,
+        "findings": 140,
+        "bySeverity": {
+          "info": 0,
+          "low": 2,
+          "medium": 48,
+          "high": 90,
+          "critical": 0
+        },
+        "engines": {
+          "gitleaks": {
+            "status": "findings",
+            "ms": 45,
+            "findings": 75,
+            "cached": true,
+            "warnings": 0
+          },
+          "semgrep": {
+            "status": "findings",
+            "ms": 15989,
+            "findings": 71,
+            "cached": false,
+            "warnings": 1
+          },
+          "osv-scanner": {
+            "status": "skipped",
+            "ms": 0,
+            "findings": 0,
+            "cached": false,
+            "warnings": 0
+          }
+        },
+        "sumEngineMs": 16034
+      },
+      "codeIntelIncrementalOneFile": {
+        "file": "app.ts",
+        "wallMs": {
+          "runs": [2633, 2467, 2417],
+          "median": 2467,
+          "min": 2417,
+          "max": 2633
+        },
+        "peakRssMb": 296,
+        "complete": true,
+        "exitCode": 0,
+        "findings": 0,
+        "bySeverity": {
+          "info": 0,
+          "low": 0,
+          "medium": 0,
+          "high": 0,
+          "critical": 0
+        },
+        "engines": {
+          "gitleaks": {
+            "status": "ok",
+            "ms": 17,
+            "findings": 0,
+            "cached": false,
+            "warnings": 0
+          },
+          "semgrep": {
+            "status": "ok",
+            "ms": 1766,
+            "findings": 0,
+            "cached": false,
+            "warnings": 0
+          },
+          "osv-scanner": {
+            "status": "skipped",
+            "ms": 0,
+            "findings": 0,
+            "cached": false,
+            "warnings": 0
+          }
+        },
+        "sumEngineMs": 1783
+      },
+      "loadAvg1mAtEnd": 7
+    }
+  },
+  "defectInjection": {
+    "detection": {
+      "hardcoded AWS access key": true,
+      "SQL injection via string concatenation": true,
+      "eval of request data": true,
+      "command injection, destructured require('child_process')": true,
+      "command injection, inline require('child_process').exec": false,
+      "vulnerable dependency (lodash 4.17.15)": true
+    },
+    "detected": 5,
+    "total": 6,
+    "wallMs": 2376,
+    "exitCode": 1,
+    "rawSemgrepFindingsOnInjectedFiles": 4,
+    "rawSemgrepFindingsMissingFromCodeIntel": [
+      "lib/injected-secret.js:1:generic.secrets.security.detected-aws-access-key-id-value.detected-aws-access-key-id-value"
+    ],
+    "ruleIdsReported": [
+      "semgrep:javascript.lang.security.detect-child-process.detect-child-process",
+      "gitleaks:aws-access-token",
+      "semgrep:javascript.lang.security.audit.code-string-concat.code-string-concat",
+      "osv-scanner:GHSA-35jh-r3h4-6jhm",
+      "osv-scanner:GHSA-p6mc-m468-83gw",
+      "osv-scanner:GHSA-r5fr-rjxr-66jc",
+      "semgrep:javascript.browser.security.eval-detected.eval-detected",
+      "osv-scanner:GHSA-29mw-wpgm-hmr9",
+      "osv-scanner:GHSA-xxjr-mmjv-4gpg"
+    ]
+  }
+}

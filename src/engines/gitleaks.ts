@@ -11,6 +11,8 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import type { Config } from "../core/config.ts";
 import { exec } from "../core/exec.ts";
+import { hashPaths } from "../core/hashing.ts";
+import { isSymlink } from "../core/safefs.ts";
 import type { RawFinding } from "../types.ts";
 import { type Engine, type EngineOutput, isLockfile, type RunContext } from "./engine.ts";
 import { detectBinary, parseJson, processFailure, toRel } from "./util.ts";
@@ -68,7 +70,12 @@ export const gitleaks: Engine = {
       : { files: null, skipReason: "no scannable files in scope" };
   },
   cacheable: () => true,
-  cacheInputs: (c: Config) => [c.engines.gitleaks.configPath ?? ""],
+  cacheInputs: (c: Config, root: string) => [
+    c.engines.gitleaks.configPath ?? "",
+    String(c.repoConfigIgnored),
+    // Results depend on the contents of the repository's gitleaks config and ignore file, not just their names.
+    hashPaths(root, [c.engines.gitleaks.configPath ?? ".gitleaks.toml", ".gitleaksignore"]),
+  ],
   async run(ctx: RunContext): Promise<EngineOutput> {
     const { dir, skippedLarge } = stage(ctx.root, ctx.files);
     try {
@@ -87,12 +94,24 @@ export const gitleaks: Engine = {
         "--max-target-megabytes",
         "5",
       ];
-      const cfgPath = ctx.config.engines.gitleaks.configPath;
-      const cfg = cfgPath ? join(ctx.root, cfgPath) : join(ctx.root, ".gitleaks.toml");
-      if (existsSync(cfg)) args.push("--config", cfg);
-      else if (cfgPath) throw new Error(`gitleaks config not found: ${cfgPath}`);
-      const ignore = join(ctx.root, ".gitleaksignore");
-      if (existsSync(ignore)) args.push("--gitleaks-ignore-path", ignore);
+      const repoWarnings: string[] = [];
+      if (!ctx.config.repoConfigIgnored) {
+        const cfgPath = ctx.config.engines.gitleaks.configPath;
+        const cfg = cfgPath ? join(ctx.root, cfgPath) : join(ctx.root, ".gitleaks.toml");
+        if (existsSync(cfg) && !isSymlink(cfg)) {
+          args.push("--config", cfg);
+          repoWarnings.push(
+            "using the repository's gitleaks configuration, which can allowlist paths or rules (--ignore-repo-config disables it)",
+          );
+        } else if (cfgPath) throw new Error(`gitleaks config not found: ${cfgPath}`);
+        const ignore = join(ctx.root, ".gitleaksignore");
+        if (existsSync(ignore) && !isSymlink(ignore)) {
+          args.push("--gitleaks-ignore-path", ignore);
+          repoWarnings.push(
+            "honoring the repository's .gitleaksignore (--ignore-repo-config disables it)",
+          );
+        }
+      }
 
       const r = await exec(ctx.binary, args, { cwd: ctx.root, timeoutMs: ctx.timeoutMs });
       const fail = processFailure("gitleaks", r, [0]);
@@ -110,8 +129,10 @@ export const gitleaks: Engine = {
         remediation: REMEDIATION,
         references: [],
       }));
-      const warnings =
-        skippedLarge > 0 ? [`${skippedLarge} file(s) larger than 5 MB were not scanned`] : [];
+      const warnings = [
+        ...repoWarnings,
+        ...(skippedLarge > 0 ? [`${skippedLarge} file(s) larger than 5 MB were not scanned`] : []),
+      ];
       return { findings, warnings };
     } finally {
       rmSync(dir, { recursive: true, force: true });

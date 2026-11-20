@@ -1,6 +1,7 @@
+import { join } from "node:path";
 import { applyBaseline, loadBaseline } from "../core/baseline.ts";
 import { ResultCache } from "../core/cache.ts";
-import { type Config, loadConfig } from "../core/config.ts";
+import { CONFIG_FILE, type Config, describeNonDefaults, loadConfig } from "../core/config.ts";
 import { UsageError } from "../core/errors.ts";
 import type { Logger } from "../core/logger.ts";
 import {
@@ -11,6 +12,7 @@ import {
 } from "../core/normalize.ts";
 import { plan } from "../core/planner.ts";
 import { runPlan } from "../core/runner.ts";
+import { lexists } from "../core/safefs.ts";
 import { findGitRoot, resolveTarget } from "../core/targets.ts";
 import type { Engine } from "../engines/engine.ts";
 import { ENGINES } from "../engines/registry.ts";
@@ -35,6 +37,7 @@ export interface ScanOptions {
   timeoutMs: number | null;
   cache: boolean;
   newOnly: boolean;
+  ignoreRepoConfig: boolean;
   allowMissing: boolean;
   log: Logger;
   /** Test seam: replace the engine set. */
@@ -64,7 +67,24 @@ export interface ScanReport {
     suppressed: { outsideChangedLines: number; baseline: number };
   };
   findings: Finding[];
+  /** Repository-supplied configuration that shaped this scan (it can weaken a scan, so it is always disclosed). */
+  config: { file: string | null; ignored: boolean; inEffect: string[] };
   exitCode: 0 | 1 | 3;
+}
+
+function configDisclosure(
+  root: string,
+  config: Config,
+  baselineInUse: boolean,
+): ScanReport["config"] {
+  const file = lexists(join(root, CONFIG_FILE)) ? CONFIG_FILE : null;
+  if (config.repoConfigIgnored) return { file, ignored: true, inEffect: [] };
+  const inEffect = describeNonDefaults(config);
+  for (const f of [".gitleaks.toml", ".gitleaksignore", ".semgrepignore"]) {
+    if (lexists(join(root, f))) inEffect.push(`${f} present`);
+  }
+  if (baselineInUse) inEffect.push("baseline in use");
+  return { file, ignored: false, inEffect };
 }
 
 export const countBySeverity = (findings: readonly Finding[]): Record<Severity, number> => {
@@ -79,9 +99,15 @@ export async function runScan(
   const started = performance.now();
   const engines = opts.engineSet ?? ENGINES;
   const root = (await findGitRoot(opts.cwd)) ?? opts.cwd;
+  if (opts.ignoreRepoConfig && opts.newOnly) {
+    throw new UsageError(
+      "--new-only needs the repository's baseline, which --ignore-repo-config discards",
+    );
+  }
   const config = loadConfig(
     root,
     engines.map((e) => e.name),
+    { ignoreRepoConfig: opts.ignoreRepoConfig },
   );
   const profile = config.profiles[opts.profile];
   const selectors = opts.engines ?? profile.engines;
@@ -159,6 +185,7 @@ export async function runScan(
       suppressed: { outsideChangedLines, baseline: baselineSuppressed },
     },
     findings,
+    config: configDisclosure(target.root, config, Boolean(baseline)),
     exitCode,
   };
   return { report, root: target.root, config };

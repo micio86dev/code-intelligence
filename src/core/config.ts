@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { CATEGORIES, isSeverity, PROFILES, type ProfileName, type Severity } from "../types.ts";
 import { UsageError } from "./errors.ts";
 import { globProblem, isSafeGlob } from "./glob.ts";
+import { isSymlink } from "./safefs.ts";
 
 export const CONFIG_FILE = ".code-intel.json";
 
@@ -17,6 +18,8 @@ export interface Config {
   exclude: string[];
   allowMissingEngines: boolean;
   baseline: string;
+  /** True when --ignore-repo-config discarded the repository's own configuration. */
+  repoConfigIgnored: boolean;
   /** In changed-file scans, drop SAST findings on lines the change did not touch. */
   lineFilter: boolean;
   profiles: Record<ProfileName, ProfileConfig>;
@@ -45,6 +48,7 @@ export function defaultConfig(): Config {
     allowMissingEngines: false,
     baseline: ".code-intel/baseline.json",
     lineFilter: true,
+    repoConfigIgnored: false,
     profiles: {
       quick: { engines: ["secrets", "sast", "deps"], timeoutMs: 60_000 },
       deep: { engines: ["secrets", "sast", "deps", "architecture"], timeoutMs: 600_000 },
@@ -79,6 +83,12 @@ function isRepoRelative(p: string): boolean {
   // Reject URLs / drive prefixes ("https://...", "C:\..."), NUL bytes, absolute and `..` paths.
   const hasScheme = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(p);
   return p.length > 0 && !hasScheme && isSafeGlob(p) && !p.includes("\0");
+}
+
+/** Paths the tool must never write: git internals and its own configuration. */
+function isProtectedPath(p: string): boolean {
+  const norm = p.replace(/\\/g, "/").replace(/^\.\//, "");
+  return norm === ".git" || norm.startsWith(".git/") || norm === CONFIG_FILE;
 }
 
 function strArray(v: unknown, path: string, issues: Issue[]): string[] | null {
@@ -124,9 +134,14 @@ export function validateConfig(raw: unknown): { config: Config; issues: Issue[] 
     else issues.push({ path: "lineFilter", message: "must be a boolean" });
   }
   if (raw.baseline !== undefined) {
-    if (typeof raw.baseline === "string" && isRepoRelative(raw.baseline))
-      cfg.baseline = raw.baseline;
-    else issues.push({ path: "baseline", message: "must be a repo-relative path without '..'" });
+    if (typeof raw.baseline !== "string" || !isRepoRelative(raw.baseline)) {
+      issues.push({ path: "baseline", message: "must be a repo-relative path without '..'" });
+    } else if (isProtectedPath(raw.baseline)) {
+      issues.push({
+        path: "baseline",
+        message: "must not point into .git or at the configuration file",
+      });
+    } else cfg.baseline = raw.baseline;
   }
 
   if (raw.profiles !== undefined) {
@@ -242,14 +257,27 @@ export function isKnownSelector(s: string, engineNames: readonly string[]): bool
   return (CATEGORIES as readonly string[]).includes(s) || engineNames.includes(s);
 }
 
-export function loadConfig(root: string, engineNames: readonly string[]): Config {
+export function loadConfig(
+  root: string,
+  engineNames: readonly string[],
+  opts: { ignoreRepoConfig?: boolean } = {},
+): Config {
+  if (opts.ignoreRepoConfig) return { ...defaultConfig(), repoConfigIgnored: true };
   const file = join(root, CONFIG_FILE);
+  // A committed symlink could point at any file on the machine and parse errors echo file contents.
+  if (isSymlink(file)) throw new UsageError(`Refusing to read ${CONFIG_FILE}: it is a symlink`);
   if (!existsSync(file)) return defaultConfig();
   let parsed: unknown;
+  let text = "";
   try {
-    parsed = JSON.parse(readFileSync(file, "utf8"));
+    text = readFileSync(file, "utf8");
+    parsed = JSON.parse(text);
   } catch (e) {
-    throw new UsageError(`Invalid ${CONFIG_FILE}: not valid JSON`, [(e as Error).message]);
+    // Report where, never what: the parser's message quotes the offending text.
+    const m = /position (\d+)/.exec((e as Error).message);
+    const upTo = m ? text.slice(0, Number(m[1])).split("\n") : [];
+    const where = m ? ` (line ${upTo.length}, column ${(upTo.at(-1)?.length ?? 0) + 1})` : "";
+    throw new UsageError(`Invalid ${CONFIG_FILE}: not valid JSON${where}`);
   }
   const { config, issues } = validateConfig(parsed);
   for (const [name, p] of Object.entries(config.profiles)) {
@@ -269,4 +297,31 @@ export function loadConfig(root: string, engineNames: readonly string[]): Config
     );
   }
   return config;
+}
+
+/**
+ * What the repository's configuration changed compared to the defaults. A scan of a repository you do not
+ * control can be quietly neutralized by its own config (everything excluded, a catch-all allowlist, a high
+ * failing threshold), so the report always says when non-default settings are in effect.
+ */
+export function describeNonDefaults(cfg: Config): string[] {
+  const d = defaultConfig();
+  const out: string[] = [];
+  if (cfg.failOn !== d.failOn) out.push(`failOn=${cfg.failOn}`);
+  const extra = cfg.exclude.filter((e, i) => e !== d.exclude[i]);
+  if (extra.length > 0) {
+    out.push(
+      `${extra.length} extra exclude pattern(s): ${extra.slice(0, 3).join(", ")}${extra.length > 3 ? ", ..." : ""}`,
+    );
+  }
+  if (cfg.allowMissingEngines) out.push("allowMissingEngines=true");
+  if (!cfg.lineFilter) out.push("lineFilter=false");
+  if (cfg.baseline !== d.baseline) out.push(`baseline=${cfg.baseline}`);
+  for (const name of Object.keys(cfg.profiles) as Array<keyof Config["profiles"]>) {
+    if (JSON.stringify(cfg.profiles[name]) !== JSON.stringify(d.profiles[name]))
+      out.push(`profiles.${name} customized`);
+  }
+  if (JSON.stringify(cfg.engines) !== JSON.stringify(d.engines))
+    out.push("engine settings customized");
+  return out;
 }

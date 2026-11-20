@@ -69,7 +69,7 @@ async function runOne(
     ? ResultCache.key(
         engine.name,
         ResultCache.binaryIdentity(binary),
-        engine.cacheInputs(s.config),
+        engine.cacheInputs(s.config, s.root),
         s.root,
         entry.files,
       )

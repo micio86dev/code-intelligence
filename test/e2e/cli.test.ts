@@ -482,3 +482,139 @@ test("the same hardcoded secret from gitleaks and a semgrep secrets rule is repo
   const text = runCli(["scan", "--engines", "secrets,sast"], p.dir).stdout;
   assert.match(text, /\[gitleaks \+semgrep\]/);
 });
+
+// ---- verifier findings: a hostile repository's own configuration, and report spoofing ----
+
+test("repo-supplied config that weakens a scan is disclosed, and --ignore-repo-config defeats it (verifier repro)", () => {
+  const p = project({
+    ".code-intel.json": JSON.stringify({
+      failOn: "critical",
+      exclude: ["*"],
+      engines: { semgrep: { configs: [".semgrep/rules.yml"] } },
+    }),
+    ".semgrep/rules.yml": RULE,
+    "ok.js": "export const ok = 1;\n",
+  });
+  p.write("bad.js", "eval(process.argv[2]);\n");
+  const weak = JSON.parse(runCli(["scan", "--format", "json", "--engines", "sast"], p.dir).stdout);
+  assert.equal(weak.exitCode, 0, "this is the attack: the repository made the scan pass");
+  assert.equal(weak.config.file, ".code-intel.json");
+  assert.ok(weak.config.inEffect.some((s: string) => s.startsWith("failOn=critical")));
+  assert.ok(weak.config.inEffect.some((s: string) => s.includes("extra exclude pattern")));
+  const text = runCli(["scan", "--engines", "sast"], p.dir).stdout;
+  assert.match(text, /repository-supplied configuration is in effect:.*failOn=critical/);
+
+  const strict = JSON.parse(
+    runCli(["scan", "--ignore-repo-config", "--format", "json", "--engines", "secrets"], p.dir)
+      .stdout,
+  );
+  assert.equal(strict.config.ignored, true);
+  assert.deepEqual(strict.config.inEffect, []);
+  assert.equal(runCli(["scan", "--ignore-repo-config", "--new-only"], p.dir).code, 2);
+});
+
+test("a repository-supplied gitleaks allowlist is disclosed as a warning, and --ignore-repo-config bypasses it (verifier repro)", () => {
+  const toml = '[extend]\nuseDefault = true\n[allowlist]\npaths = [".*"]\n';
+  const p = project({ ".gitleaks.toml": toml, "a.txt": "x\n" });
+  p.write("creds.txt", `aws_access_key_id = ${SECRET}\n`);
+  const hidden = JSON.parse(
+    runCli(["scan", "--format", "json", "--engines", "secrets"], p.dir).stdout,
+  );
+  assert.equal(hidden.findings.length, 0, "the hostile allowlist hides the secret");
+  const gl = hidden.engines.find((e: { engine: string }) => e.engine === "gitleaks");
+  assert.match(gl.warnings.join(" "), /repository's gitleaks configuration/);
+  assert.ok(hidden.config.inEffect.includes(".gitleaks.toml present"));
+  const found = JSON.parse(
+    runCli(["scan", "--ignore-repo-config", "--format", "json", "--engines", "secrets"], p.dir)
+      .stdout,
+  );
+  assert.equal(found.findings.length, 1);
+  assert.equal(found.exitCode, 1);
+});
+
+test("semgrep secrets rules that interpolate the matched text never copy it into findings or the cache (verifier note)", () => {
+  const rule = `rules:
+  - id: secrets.leaky
+    languages: [generic]
+    severity: ERROR
+    message: "found credential $VALUE in source"
+    patterns:
+      - pattern-regex: password = "(?P<VALUE>[^"]+)"
+`;
+  const secretish = "hunter2-very-secret-value";
+  const p = project({ ".code-intel.json": CONFIG, ".semgrep/rules.yml": rule, "a.txt": "x\n" });
+  p.write("conf.txt", `password = "${secretish}"\n`);
+  const r = runCli(["scan", "--format", "json", "--engines", "sast"], p.dir);
+  const j = JSON.parse(r.stdout);
+  const f = j.findings.find((x: { engine: string }) => x.engine === "semgrep");
+  assert.ok(f, "the secrets-rule finding exists");
+  assert.equal(f.category, "secrets");
+  assert.equal(
+    r.stdout.includes(secretish),
+    false,
+    "interpolated secret must not appear in output",
+  );
+  assert.equal(r.stderr.includes(secretish), false);
+  const dir = join(p.dir, ".code-intel/cache");
+  if (existsSync(dir))
+    for (const x of readdirSync(dir))
+      assert.equal(readFileSync(join(dir, x), "utf8").includes(secretish), false);
+});
+
+test("the text report escapes control characters from file names, so a repository cannot forge report lines (verifier repro)", {
+  skip: process.platform === "win32",
+}, () => {
+  const p = project({
+    ".code-intel.json": CONFIG,
+    ".semgrep/rules.yml": RULE,
+    "ok.js": "export const ok = 1;\n",
+  });
+  p.write(
+    "evil\n\nSummary: clean\nResult: PASS (exit 0)\n\u001b[2J.js",
+    "eval(process.argv[2]);\n",
+  );
+  const out = runCli(["scan", "--engines", "sast"], p.dir).stdout;
+  const lines = out.split("\n");
+  assert.equal(lines.includes("Summary: clean"), false, "no forged summary line");
+  assert.equal(
+    lines.some((l) => l.startsWith("Result: PASS")),
+    false,
+    "no forged result line",
+  );
+  assert.equal(out.includes("\u001b"), false, "no raw escape sequences reach the terminal");
+  assert.match(out, /Result: FAIL \(exit 1\)/);
+});
+
+test("editing a local semgrep rule or the repo's gitleaks config invalidates cached results (cache-key correctness)", () => {
+  const p = project({
+    ".code-intel.json": CONFIG,
+    ".semgrep/rules.yml": RULE,
+    "ok.js": "export const ok = 1;\n",
+  });
+  p.write("bad.js", "eval(process.argv[2]);\n");
+  const scan = () =>
+    JSON.parse(runCli(["scan", "--format", "json", "--engines", "sast"], p.dir).stdout);
+  const first = scan();
+  assert.equal(first.findings.length, 1);
+  const second = scan();
+  assert.equal(second.engines[0].cached, true, "identical inputs are served from cache");
+  // Weaken the rule: the cached result is now wrong and must not be reused.
+  p.write(
+    ".semgrep/rules.yml",
+    RULE.replace("pattern: eval(...)", "pattern: neverMatchesAnything(...)"),
+  );
+  const third = scan();
+  assert.equal(third.engines[0].cached, false, "a changed rule file is a cache miss");
+  assert.equal(third.findings.length, 0);
+
+  const q = project({ "a.txt": "x\n" });
+  q.write("creds.txt", `aws_access_key_id = ${SECRET}\n`);
+  const sec = () =>
+    JSON.parse(runCli(["scan", "--format", "json", "--engines", "secrets"], q.dir).stdout);
+  assert.equal(sec().findings.length, 1);
+  assert.equal(sec().engines[0].cached, true);
+  q.write(".gitleaks.toml", '[extend]\nuseDefault = true\n[allowlist]\npaths = [".*"]\n');
+  const hidden = sec();
+  assert.equal(hidden.engines[0].cached, false, "adding a gitleaks config is a cache miss");
+  assert.equal(hidden.findings.length, 0);
+});

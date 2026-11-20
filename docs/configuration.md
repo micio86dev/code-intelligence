@@ -27,11 +27,15 @@ Optional file `.code-intel.json` at the repository root. Everything has a defaul
 | `exclude`                     | `[]`                        | **Added to** built-ins: `.git`, `node_modules`, `vendor`, `dist`, `build`, `coverage`, `.code-intel`, `*.min.js`, `*.map` |
 | `allowMissingEngines`         | `false`                     | Missing engine → warning instead of exit 3                                                                                |
 | `lineFilter`                  | `true`                      | Hide SAST findings on untouched lines in changed-file scans                                                               |
-| `baseline`                    | `.code-intel/baseline.json` | Repo-relative                                                                                                             |
+| `baseline`                    | `.code-intel/baseline.json` | Repo-relative; may not point into `.git` or at the config file                                                            |
 | `profiles.<name>.engines`     | see README                  | Categories or engine names                                                                                                |
 | `profiles.<name>.timeoutMs`   | 60000 / 600000              | 1000–3600000                                                                                                              |
 | `engines.gitleaks.configPath` | none                        | Falls back to `.gitleaks.toml` if present. `.gitleaksignore` is honored                                                   |
 | `engines.semgrep.configs`     | `["p/default"]`             | Registry ids (`p/…`, `r/…`) or repo-relative paths. **URLs are rejected**                                                 |
+
+## Configuration from untrusted repositories
+
+The configuration lives in the repository, so whoever controls the repository controls it. Every report lists non-default repository settings under `config.inEffect` (and prints a note in the text report). When scanning code you did not write, pass `--ignore-repo-config`.
 
 ## Glob rules for `exclude`
 

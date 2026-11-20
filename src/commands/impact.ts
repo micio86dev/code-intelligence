@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { loadConfig } from "../core/config.ts";
 import { exec, findBinary } from "../core/exec.ts";
@@ -39,7 +39,10 @@ const stem = (p: string): string => {
   return base;
 };
 
-const IMPORT_RE = /(?:from|require\(|import\()\s*['"]([^'"]+)['"]|^\s*(?:from|import)\s+([\w.]+)/gm;
+// Horizontal whitespace only: `\s*` on a file of many blank lines is quadratic (verified: 400 KB took 65 s).
+const IMPORT_RE =
+  /(?:from|require\(|import\()[ \t]*['"]([^'"]+)['"]|^[ \t]*(?:from|import)[ \t]+([\w.]+)/gm;
+const MAX_SCAN_BYTES = 1_000_000;
 
 /** Direct importers + name matches. Honest but shallow: it cannot see transitive dependents. */
 function heuristic(
@@ -61,6 +64,7 @@ function heuristic(
     }
     let src: string;
     try {
+      if (statSync(join(root, t)).size > MAX_SCAN_BYTES) continue;
       src = readFileSync(join(root, t), "utf8");
     } catch {
       continue;

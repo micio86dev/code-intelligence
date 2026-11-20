@@ -1,7 +1,8 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { Finding } from "../types.ts";
 import { UsageError } from "./errors.ts";
+import { isSymlink, safeWrite, UnsafePathError } from "./safefs.ts";
 
 interface BaselineFile {
   schemaVersion: 1;
@@ -11,6 +12,7 @@ interface BaselineFile {
 
 export function loadBaseline(root: string, path: string): Set<string> | null {
   const abs = join(root, path);
+  if (isSymlink(abs)) throw new UsageError(`Refusing to read baseline ${path}: it is a symlink`);
   if (!existsSync(abs)) return null;
   try {
     const parsed = JSON.parse(readFileSync(abs, "utf8")) as BaselineFile;
@@ -23,8 +25,6 @@ export function loadBaseline(root: string, path: string): Set<string> | null {
 }
 
 export function saveBaseline(root: string, path: string, findings: readonly Finding[]): number {
-  const abs = join(root, path);
-  mkdirSync(dirname(abs), { recursive: true });
   const seen = new Set<string>();
   const entries = [];
   for (const f of findings) {
@@ -34,7 +34,12 @@ export function saveBaseline(root: string, path: string, findings: readonly Find
   }
   entries.sort((a, b) => a.fingerprint.localeCompare(b.fingerprint));
   const body: BaselineFile = { schemaVersion: 1, createdAt: new Date().toISOString(), entries };
-  writeFileSync(abs, `${JSON.stringify(body, null, 2)}\n`);
+  try {
+    safeWrite(root, path, `${JSON.stringify(body, null, 2)}\n`);
+  } catch (e) {
+    if (e instanceof UnsafePathError) throw new UsageError(`Cannot write baseline: ${e.message}`);
+    throw e;
+  }
   return entries.length;
 }
 

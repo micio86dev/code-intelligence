@@ -48,7 +48,7 @@ export interface Engine {
   /** True only when results are a pure function of file contents + engine + config. */
   cacheable(config: Config): boolean;
   /** Config values that influence results; part of the cache key. */
-  cacheInputs(config: Config): string[];
+  cacheInputs(config: Config, root: string): string[];
   run(ctx: RunContext): Promise<EngineOutput>;
 }
 

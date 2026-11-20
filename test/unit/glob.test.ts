@@ -57,3 +57,63 @@ test("unbalanced braces are literal and never throw", () => {
   assert.equal(m("c}d"), true);
   assert.equal(m("ab"), false);
 });
+
+test("verifier repro: 11 stars against a 50-char name returns instantly (linear-time matcher)", () => {
+  const evil = "*a*a*a*a*a*a*a*a*a*a*ab";
+  const m = compileGlobs([evil]);
+  for (const n of [40, 80, 5000]) {
+    const t0 = performance.now();
+    assert.equal(m("a".repeat(n)), false);
+    assert.ok(performance.now() - t0 < 200, `n=${n} took ${performance.now() - t0}ms`);
+  }
+  // and the same shape with slashes and double stars, which have a different code path
+  const g = compileGlobs([`${"**/".repeat(3)}${"*a".repeat(5)}b`]);
+  const t1 = performance.now();
+  g(`${"a/".repeat(500)}a`);
+  assert.ok(performance.now() - t1 < 500);
+});
+
+test("matcher semantics: stars, classes, braces, anchoring and directory prefixes", () => {
+  const m = compileGlobs([
+    "src/**/gen-*.ts",
+    "docs/[a-c]?.md",
+    "!x",
+    "a/{b,c}/d",
+    "/rooted.js",
+    "lib/",
+  ]);
+  assert.equal(m("src/gen-a.ts"), true);
+  assert.equal(m("src/x/y/gen-b.ts"), true);
+  assert.equal(m("src/x/gen.ts"), false);
+  assert.equal(m("docs/a1.md"), true);
+  assert.equal(m("docs/d1.md"), false);
+  assert.equal(m("docs/a/1.md"), false, "? and [] never cross a slash");
+  assert.equal(m("a/b/d"), true);
+  assert.equal(m("a/c/d/e.txt"), true, "everything beneath a matched directory");
+  assert.equal(m("a/x/d"), false);
+  assert.equal(m("rooted.js"), true);
+  assert.equal(m("sub/rooted.js"), false, "a leading slash anchors at the root");
+  assert.equal(m("lib/deep/file.js"), true);
+  assert.equal(m("library/file.js"), false);
+});
+
+test("a large file list with the default-style excludes is matched quickly", () => {
+  const m = compileGlobs([
+    ".git",
+    "node_modules",
+    "vendor",
+    "dist",
+    "*.min.js",
+    "*.map",
+    "**/gen/**",
+  ]);
+  const paths = Array.from(
+    { length: 50_000 },
+    (_, i) => `packages/pkg${i % 50}/src/deep/dir/file${i}.ts`,
+  );
+  const t0 = performance.now();
+  let hits = 0;
+  for (const p of paths) if (m(p)) hits += 1;
+  assert.equal(hits, 0);
+  assert.ok(performance.now() - t0 < 3000, `took ${performance.now() - t0}ms`);
+});

@@ -41,6 +41,10 @@ export function renderSarif(r: ScanReport): string {
         invocations: [
           {
             executionSuccessful: r.complete,
+            properties: {
+              repoConfigIgnored: r.config.ignored,
+              repoConfigInEffect: r.config.inEffect,
+            },
             toolExecutionNotifications: r.engines
               .filter(
                 (e) => e.status === "timeout" || e.status === "error" || e.status === "unavailable",

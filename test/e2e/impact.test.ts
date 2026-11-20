@@ -72,3 +72,23 @@ test("codegraph: follows the import graph transitively", { skip: !hasCodegraph }
   assert.equal(r.method, "codegraph");
   assert.deepEqual(r.affectedTests, ["test/util.test.js"]);
 });
+
+test("impact survives a pathological test file: many blank lines no longer cost quadratic time (verifier repro)", () => {
+  const p = project();
+  p.write("test/zz.test.js", "\n".repeat(400_000));
+  p.write("src/other.js", `${FILES["src/other.js"]}export const y = 3;\n`);
+  const t0 = Date.now();
+  const r = impact(p.dir);
+  assert.ok(Date.now() - t0 < 10_000, `took ${Date.now() - t0}ms (was 65 s before the fix)`);
+  assert.ok(r.affectedTests.includes("test/other.test.js"));
+});
+
+test("impact skips test files over 1 MB instead of reading them", () => {
+  const p = project();
+  p.write("test/huge.test.js", `${'import { other } from "../src/other.js";\n'.repeat(40_000)}`);
+  p.commit("add huge test"); // committed, so it is only a candidate importer, not a changed test
+  p.write("src/other.js", `${FILES["src/other.js"]}export const y = 3;\n`);
+  const r = impact(p.dir);
+  assert.equal(r.affectedTests.includes("test/huge.test.js"), false);
+  assert.ok(r.affectedTests.includes("test/other.test.js"));
+});

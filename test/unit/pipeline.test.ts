@@ -68,6 +68,7 @@ const base = (cwd: string, engineSet: Engine[], over: Record<string, unknown> = 
   timeoutMs: null,
   cache: false,
   newOnly: false,
+  ignoreRepoConfig: false,
   allowMissing: false,
   log: silentLogger,
   engineSet,

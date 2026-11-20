@@ -10,12 +10,22 @@ const TAG: Record<EngineResult["status"], string> = {
   error: "ERROR",
 };
 
+/** Escape control characters: file names and messages come from the scanned repository and could forge report lines or move the cursor. */
+export function clean(s: string): string {
+  return s.replace(/[\u0000-\u001f\u007f\u0080-\u009f]/g, (c) => {
+    if (c === "\n") return "\\n";
+    if (c === "\t") return "\\t";
+    if (c === "\r") return "\\r";
+    return `\\x${c.charCodeAt(0).toString(16).padStart(2, "0")}`;
+  });
+}
+
 const secs = (ms: number) => `${(ms / 1000).toFixed(2)}s`;
 
 export function renderText(r: ScanReport): string {
   const L: string[] = [];
   const t = r.target;
-  const scope = t.mode === "since" ? `since ${t.ref}` : t.mode;
+  const scope = t.mode === "since" ? `since ${clean(t.ref ?? "")}` : t.mode;
   L.push(
     `${r.tool.name} ${r.tool.version} | profile ${r.profile} | ${scope} | ${t.fileCount} file(s), ${t.excludedCount} excluded | ${secs(r.durationMs)}`,
   );
@@ -26,9 +36,9 @@ export function renderText(r: ScanReport): string {
     const detail =
       e.status === "ok" || e.status === "findings"
         ? `${e.findingCount} finding(s)${e.cached ? ", cached" : ""}, ${secs(e.durationMs)}`
-        : (e.reason ?? "");
+        : clean(e.reason ?? "");
     L.push(`  [${TAG[e.status].padEnd(7)}] ${(e.engine + ver).padEnd(22)} ${detail}`);
-    for (const w of e.warnings) L.push(`            warning: ${w}`);
+    for (const w of e.warnings) L.push(`            warning: ${clean(w)}`);
   }
   L.push("");
 
@@ -37,12 +47,12 @@ export function renderText(r: ScanReport): string {
   } else {
     L.push(`Findings (${r.summary.total})`);
     for (const f of r.findings) {
-      const loc = f.line === null ? f.file : `${f.file}:${f.line}`;
+      const loc = clean(f.line === null ? f.file : `${f.file}:${f.line}`);
       L.push(
-        `  ${f.severity.toUpperCase().padEnd(8)} ${loc}  [${f.engine}${f.alsoReportedBy.length ? ` +${f.alsoReportedBy.join(",")}` : ""}] ${f.ruleId}`,
+        `  ${f.severity.toUpperCase().padEnd(8)} ${loc}  [${f.engine}${f.alsoReportedBy.length ? ` +${f.alsoReportedBy.join(",")}` : ""}] ${clean(f.ruleId)}`,
       );
-      L.push(`           ${f.message}`);
-      if (f.remediation) L.push(`           fix: ${f.remediation}`);
+      L.push(`           ${clean(f.message)}`);
+      if (f.remediation) L.push(`           fix: ${clean(f.remediation)}`);
     }
   }
   L.push("");
@@ -56,6 +66,13 @@ export function renderText(r: ScanReport): string {
   if (sup.outsideChangedLines > 0) {
     L.push(
       `Note: ${sup.outsideChangedLines} SAST finding(s) on unchanged lines were hidden (use --all or set "lineFilter": false to see them).`,
+    );
+  }
+  if (r.config.ignored) {
+    L.push("Note: the repository's own configuration was ignored (--ignore-repo-config).");
+  } else if (r.config.inEffect.length > 0) {
+    L.push(
+      `Note: repository-supplied configuration is in effect: ${r.config.inEffect.map(clean).join("; ")}. A repository can configure a scan to find less; use --ignore-repo-config for code you do not trust.`,
     );
   }
   if (sup.baseline > 0)

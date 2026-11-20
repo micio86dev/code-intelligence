@@ -15,13 +15,32 @@ mkdir -p "$BIN"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
-curl -fsSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS}/gitleaks_${GITLEAKS}_linux_x64.tar.gz" | tar -xz -C "$tmp" gitleaks
+# Every downloaded binary is verified against the SHA-256 its project publishes for the pinned release.
+fetch_verified() { # <url> <checksums-url> <asset-name> <output-file>
+  local url="$1" sums="$2" name="$3" out="$4"
+  curl -fsSL -o "$out" "$url"
+  curl -fsSL -o "$tmp/sums.txt" "$sums"
+  local expected
+  expected="$(awk -v n="$name" '$2 == n || $2 == "*"n {print $1}' "$tmp/sums.txt")"
+  [ -n "$expected" ] || { echo "no checksum published for $name" >&2; exit 1; }
+  echo "$expected  $out" | sha256sum -c - >/dev/null || { echo "checksum mismatch for $name" >&2; exit 1; }
+}
+
+fetch_verified "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS}/gitleaks_${GITLEAKS}_linux_x64.tar.gz" \
+  "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS}/gitleaks_${GITLEAKS}_checksums.txt" \
+  "gitleaks_${GITLEAKS}_linux_x64.tar.gz" "$tmp/gitleaks.tgz"
+tar -xzf "$tmp/gitleaks.tgz" -C "$tmp" gitleaks
 install -m 0755 "$tmp/gitleaks" "$BIN/gitleaks"
 
-curl -fsSL -o "$BIN/osv-scanner" "https://github.com/google/osv-scanner/releases/download/v${OSV}/osv-scanner_linux_amd64"
-chmod 0755 "$BIN/osv-scanner"
+fetch_verified "https://github.com/google/osv-scanner/releases/download/v${OSV}/osv-scanner_linux_amd64" \
+  "https://github.com/google/osv-scanner/releases/download/v${OSV}/osv-scanner_SHA256SUMS" \
+  "osv-scanner_linux_amd64" "$tmp/osv-scanner"
+install -m 0755 "$tmp/osv-scanner" "$BIN/osv-scanner"
 
-curl -fsSL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY}/trivy_${TRIVY}_Linux-64bit.tar.gz" | tar -xz -C "$tmp" trivy
+fetch_verified "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY}/trivy_${TRIVY}_Linux-64bit.tar.gz" \
+  "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY}/trivy_${TRIVY}_checksums.txt" \
+  "trivy_${TRIVY}_Linux-64bit.tar.gz" "$tmp/trivy.tgz"
+tar -xzf "$tmp/trivy.tgz" -C "$tmp" trivy
 install -m 0755 "$tmp/trivy" "$BIN/trivy"
 
 pipx install "semgrep==${SEMGREP}"
