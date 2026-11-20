@@ -86,6 +86,8 @@ Nothing is installed automatically.
 
 ## Quick start
 
+New here? [docs/first-test.md](docs/first-test.md) is a ten-minute walkthrough with a throwaway project and fake defects.
+
 ```bash
 cd your-repo
 code-intel doctor                    # which engines are available?
@@ -151,7 +153,7 @@ It writes only your optional `.code-intel.json` and `.code-intel/baseline.json` 
 
 ## Documentation
 
-[Architecture](docs/architecture.md) · [CLI reference](docs/cli.md) · [Configuration](docs/configuration.md) · [Security model](docs/security.md) · [Performance](docs/performance.md) · [Benchmarks](docs/benchmarks.md) · [Troubleshooting](docs/troubleshooting.md) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md) · [Roadmap](ROADMAP.md) · [Third-party notices](THIRD_PARTY.md)
+[First test](docs/first-test.md) · [Architecture](docs/architecture.md) · [CLI reference](docs/cli.md) · [Configuration](docs/configuration.md) · [Security model](docs/security.md) · [Performance](docs/performance.md) · [Benchmarks](docs/benchmarks.md) · [Troubleshooting](docs/troubleshooting.md) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md) · [Roadmap](ROADMAP.md) · [Third-party notices](THIRD_PARTY.md)
 
 ## License
 
