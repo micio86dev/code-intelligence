@@ -34,7 +34,9 @@ export const trivy: Engine = {
   priority: 1,
   binaryName: "trivy",
   installHint: "Install: brew install trivy (or see https://trivy.dev)",
-  detect: () => detectBinary("trivy", ["--version"], trivy.installHint),
+  versionArgs: ["--version"],
+  detect: (opts) =>
+    detectBinary("trivy", trivy.versionArgs, trivy.installHint, opts?.withVersion ?? true),
   select(target) {
     const files = target.files.filter(isLockfile);
     return files.length > 0

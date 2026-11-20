@@ -48,6 +48,7 @@ function fake(name: string, category: Engine["category"], over: Partial<Engine> 
     category,
     priority: 0,
     binaryName: name,
+    versionArgs: ["--version"],
     installHint: `install ${name}`,
     detect: async () => present,
     select: (t) => ({ files: t.files, skipReason: null }),
@@ -291,4 +292,78 @@ test("error details skip runtime boilerplate headers (node and python) and repor
   assert.equal(errorDetail(nodeErr), "TypeError: ts.parseConfigFileTextToJson is not a function");
   assert.equal(errorDetail("Error: simple failure\nsecond"), "Error: simple failure");
   assert.equal(errorDetail("node:internal/x:1\nno exception line\nlast words"), "last words");
+});
+
+test("planning only locates binaries: versions are read concurrently with the engine run, not before it", async () => {
+  const detectCalls: Array<{ withVersion?: boolean } | undefined> = [];
+  const slowVersion = fake("slowv", "secrets", {
+    versionArgs: ["-e", "setTimeout(() => console.log('9.8.7'), 700)"],
+    detect: async (opts) => {
+      detectCalls.push(opts);
+      return {
+        available: true,
+        version: opts?.withVersion === false ? null : "from-detect",
+        binary: process.execPath,
+        reason: null,
+      };
+    },
+    run: async () => {
+      await new Promise((r) => setTimeout(r, 800)); // the engine itself takes about as long as the version lookup
+      return { findings: [], warnings: [] };
+    },
+  });
+  const p = project({ "a.js": "x\n" });
+  const t0 = performance.now();
+  const { report } = await runScan(base(p.dir, [slowVersion], { engines: ["secrets"] }));
+  const elapsed = performance.now() - t0;
+  assert.deepEqual(detectCalls, [{ withVersion: false }], "the planner must not ask for versions");
+  assert.equal(report.engines[0]?.version, "9.8.7", "the version is still reported");
+  assert.ok(
+    elapsed < 1400,
+    `version lookup and engine run must overlap (took ${Math.round(elapsed)}ms; serial would be ~1500ms+)`,
+  );
+});
+
+test("a cache hit reports the stored version without spawning the tool", async () => {
+  const p = project({ "a.js": "x\n" });
+  let versionSpawns = 0;
+  const e = fake("vcache", "secrets", {
+    cacheable: () => true,
+    versionArgs: ["-e", "console.log('3.2.1')"],
+    detect: async () => ({
+      available: true,
+      version: null,
+      binary: process.execPath,
+      reason: null,
+    }),
+    run: async () => {
+      versionSpawns += 1;
+      return { findings: [], warnings: [] };
+    },
+  });
+  const first = await runScan(base(p.dir, [e], { cache: true, engines: ["secrets"] }));
+  assert.equal(first.report.engines[0]?.version, "3.2.1");
+  const second = await runScan(base(p.dir, [e], { cache: true, engines: ["secrets"] }));
+  assert.equal(second.report.engines[0]?.cached, true);
+  assert.equal(second.report.engines[0]?.version, "3.2.1", "version comes from the cache entry");
+  assert.equal(versionSpawns, 1);
+});
+
+test("an engine that fails still reports its version", async () => {
+  const p = project({ "a.js": "x\n" });
+  const e = fake("vfail", "sast", {
+    versionArgs: ["-e", "console.log('5.5.5')"],
+    detect: async () => ({
+      available: true,
+      version: null,
+      binary: process.execPath,
+      reason: null,
+    }),
+    run: async () => {
+      throw new Error("kaboom");
+    },
+  });
+  const { report } = await runScan(base(p.dir, [e], { engines: ["sast"] }));
+  assert.equal(report.engines[0]?.status, "error");
+  assert.equal(report.engines[0]?.version, "5.5.5");
 });

@@ -68,7 +68,8 @@ export async function plan(
         skips.push(sel.skipReason ?? "nothing to scan");
         continue;
       }
-      const detection = await engine.detect();
+      // Locate only: reading versions spawns every tool (semgrep alone is ~0.5 s) and would delay all engines.
+      const detection = await engine.detect({ withVersion: false });
       if (detection.available) {
         chosen = {
           name: engine.name,

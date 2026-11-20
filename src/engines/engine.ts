@@ -43,7 +43,9 @@ export interface Engine {
   readonly priority: number;
   readonly binaryName: string;
   readonly installHint: string;
-  detect(): Promise<Detection>;
+  /** Arguments that make the binary print its version. */
+  readonly versionArgs: readonly string[];
+  detect(opts?: { withVersion?: boolean }): Promise<Detection>;
   select(target: ScanTarget, profile: ProfileName): Selection;
   /** True only when results are a pure function of file contents + engine + config. */
   cacheable(config: Config): boolean;

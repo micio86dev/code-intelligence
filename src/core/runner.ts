@@ -1,5 +1,6 @@
 import { availableParallelism } from "node:os";
 import type { Engine, EngineOutput, RunContext } from "../engines/engine.ts";
+import { readVersion } from "../engines/util.ts";
 import type { EngineResult, EngineStatus, RawFinding, TargetMode } from "../types.ts";
 import { ResultCache } from "./cache.ts";
 import type { Config } from "./config.ts";
@@ -59,6 +60,12 @@ async function runOne(
   }
 
   const engine = entry.engine as Engine; // action === "run" always carries an engine
+  // Version lookup runs alongside the engine instead of before it: it adds no wall time.
+  const versionP: Promise<string | null> = entry.detection?.version
+    ? Promise.resolve(entry.detection.version)
+    : entry.detection?.binary
+      ? readVersion(entry.detection.binary, engine.versionArgs).catch(() => null)
+      : Promise.resolve(null);
   const binary = entry.detection?.binary ?? engine.binaryName;
   const started = performance.now();
   const base = emptyResult(entry, "ok", null);
@@ -81,6 +88,8 @@ async function runOne(
       return {
         result: {
           ...base,
+          // A cache hit must stay fast, so it reports the version stored with the entry, never spawning the tool.
+          version: hit.version ?? null,
           status: hit.findings.length ? "findings" : "ok",
           warnings: hit.warnings,
           findingCount: hit.findings.length,
@@ -104,11 +113,18 @@ async function runOne(
   };
   try {
     const out: EngineOutput = await engine.run(ctx);
-    if (useCache) s.cache.put(key, { findings: out.findings, warnings: out.warnings });
+    const version = out.version ?? (await versionP);
+    if (useCache) {
+      s.cache.put(key, {
+        findings: out.findings,
+        warnings: out.warnings,
+        ...(version ? { version } : {}),
+      });
+    }
     return {
       result: {
         ...base,
-        version: out.version ?? base.version,
+        version,
         status: out.findings.length ? "findings" : "ok",
         warnings: out.warnings,
         findingCount: out.findings.length,
@@ -125,6 +141,7 @@ async function runOne(
     return {
       result: {
         ...base,
+        version: await versionP,
         status: failure?.kind ?? "error",
         reason: failure
           ? failure.message

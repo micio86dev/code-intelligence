@@ -62,7 +62,9 @@ export const gitleaks: Engine = {
   binaryName: "gitleaks",
   installHint:
     "Install: brew install gitleaks (or see https://github.com/gitleaks/gitleaks#installing)",
-  detect: () => detectBinary("gitleaks", ["version"], gitleaks.installHint),
+  versionArgs: ["version"],
+  detect: (opts) =>
+    detectBinary("gitleaks", gitleaks.versionArgs, gitleaks.installHint, opts?.withVersion ?? true),
   select(target) {
     const files = target.files.filter((f) => !isLockfile(f));
     return files.length > 0

@@ -56,7 +56,14 @@ export const osvScanner: Engine = {
   binaryName: "osv-scanner",
   installHint:
     "Install: brew install osv-scanner (or go install github.com/google/osv-scanner/v2/cmd/osv-scanner@latest)",
-  detect: () => detectBinary("osv-scanner", ["--version"], osvScanner.installHint),
+  versionArgs: ["--version"],
+  detect: (opts) =>
+    detectBinary(
+      "osv-scanner",
+      osvScanner.versionArgs,
+      osvScanner.installHint,
+      opts?.withVersion ?? true,
+    ),
   select(target) {
     const files = target.files.filter(isLockfile);
     return files.length > 0

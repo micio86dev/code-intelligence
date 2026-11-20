@@ -34,7 +34,9 @@ export const astGrep: Engine = {
   priority: 0,
   binaryName: "ast-grep",
   installHint: "Install: brew install ast-grep (or npm i -g @ast-grep/cli)",
-  detect: () => detectBinary("ast-grep", ["--version"], astGrep.installHint),
+  versionArgs: ["--version"],
+  detect: (opts) =>
+    detectBinary("ast-grep", astGrep.versionArgs, astGrep.installHint, opts?.withVersion ?? true),
   select(target) {
     if (!CONFIGS.some((c) => existsSync(join(target.root, c)))) {
       return {

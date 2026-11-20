@@ -4,10 +4,26 @@ import { EngineFailure } from "../core/errors.ts";
 import { type ExecResult, exec, findBinary } from "../core/exec.ts";
 import type { Detection } from "./engine.ts";
 
+/** Run `<binary> <versionArgs>` and parse a semantic version out of the output (null if none). */
+export async function readVersion(
+  binary: string,
+  versionArgs: readonly string[],
+): Promise<string | null> {
+  const r = await exec(binary, versionArgs, { cwd: process.cwd(), timeoutMs: 15_000 });
+  const m = /(\d+\.\d+\.\d+(?:[-+][\w.]+)?)/.exec(`${r.stdout}\n${r.stderr}`);
+  return m?.[1] ?? null;
+}
+
+/**
+ * Locate an engine. `withVersion: false` only looks the binary up on PATH (microseconds); asking for the
+ * version spawns the tool, and for semgrep (Python) that alone takes about half a second. Scans therefore
+ * locate first and read versions concurrently with the engines' own runs; `doctor` asks for versions.
+ */
 export async function detectBinary(
   binaryName: string,
-  versionArgs: string[],
+  versionArgs: readonly string[],
   hint: string,
+  withVersion = true,
 ): Promise<Detection> {
   const binary = findBinary(binaryName);
   if (!binary) {
@@ -18,9 +34,8 @@ export async function detectBinary(
       reason: `'${binaryName}' not found on PATH. ${hint}`,
     };
   }
-  const r = await exec(binary, versionArgs, { cwd: process.cwd(), timeoutMs: 15_000 });
-  const m = /(\d+\.\d+\.\d+(?:[-+][\w.]+)?)/.exec(`${r.stdout}\n${r.stderr}`);
-  return { available: true, version: m?.[1] ?? null, binary, reason: null };
+  const version = withVersion ? await readVersion(binary, versionArgs) : null;
+  return { available: true, version, binary, reason: null };
 }
 
 export const firstLine = (s: string, max = 300): string =>

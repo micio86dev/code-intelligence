@@ -44,7 +44,9 @@ export const semgrep: Engine = {
   priority: 0,
   binaryName: "semgrep",
   installHint: "Install: brew install semgrep (or pipx install semgrep)",
-  detect: () => detectBinary("semgrep", ["--version"], semgrep.installHint),
+  versionArgs: ["--version"],
+  detect: (opts) =>
+    detectBinary("semgrep", semgrep.versionArgs, semgrep.installHint, opts?.withVersion ?? true),
   select(target) {
     const files = target.files.filter((f) => !isLockfile(f));
     return files.length > 0

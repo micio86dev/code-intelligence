@@ -17,6 +17,8 @@ import { isSafeGlob } from "./glob.ts";
 export interface CacheEntry {
   findings: RawFinding[];
   warnings: string[];
+  /** Engine version recorded when the entry was produced (cache keys include the binary identity). */
+  version?: string;
 }
 
 const isStr = (v: unknown): v is string => typeof v === "string";
@@ -31,6 +33,7 @@ export function isCacheEntry(x: unknown): x is CacheEntry {
   if (typeof x !== "object" || x === null) return false;
   const e = x as Record<string, unknown>;
   if (!Array.isArray(e.warnings) || !e.warnings.every(isStr)) return false;
+  if (e.version !== undefined && !isStr(e.version)) return false;
   if (!Array.isArray(e.findings)) return false;
   return e.findings.every((f) => {
     if (typeof f !== "object" || f === null) return false;
