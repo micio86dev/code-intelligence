@@ -71,7 +71,7 @@ npm install -g code-intelligence
 Or from a GitHub release (the same prebuilt tarball, no build step):
 
 ```bash
-npm install -g https://github.com/micio86dev/code-intelligence/releases/download/v0.1.4/code-intelligence-0.1.4.tgz
+npm install -g https://github.com/micio86dev/code-intelligence/releases/download/v0.1.5/code-intelligence-0.1.5.tgz
 ```
 
 Or straight from the repository (builds on install; this can fail if your npm config sets `allow-scripts`, see [troubleshooting](docs/troubleshooting.md)):
@@ -80,7 +80,7 @@ Or straight from the repository (builds on install; this can fail if your npm co
 npm install -g github:micio86dev/code-intelligence
 ```
 
-(`0.1.0` was published to npm by hand from the release tarball, so it carries no provenance attestation yet; see [ROADMAP](ROADMAP.md).)
+(Versions `0.1.0` to `0.1.4` were published to npm by hand from the release tarball and carry no provenance attestation. Later versions are published by the release workflow; see [ROADMAP](ROADMAP.md).)
 
 Then install the engines you want. `code-intel doctor` prints what is present and the exact command for what is missing:
 

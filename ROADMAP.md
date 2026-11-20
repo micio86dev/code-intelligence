@@ -4,7 +4,7 @@ Honest list. Items are _not_ promised and nothing here is claimed to work today.
 
 ## Next
 
-- **npm provenance**: `0.1.0` is on the registry but was published manually from the release tarball, so it has no provenance attestation. Releases from the workflow need an `NPM_TOKEN` secret that can publish with a 2FA-bypass granular token (npm is restricting those, so this may need a different mechanism such as trusted publishing).
+- **npm provenance for 0.1.0 to 0.1.4**: those versions were published by hand and have no attestation; npm does not allow adding one later. Releases from `0.1.5` on are published by the workflow with trusted publishing.
 - **Offline mode**: expose osv-scanner `--offline-vulnerabilities`, trivy `--skip-db-update --offline-scan`, and require local semgrep rules, for air-gapped or privacy-restricted use.
 - **Mutation testing beyond JS/TS**: `cargo-mutants` (Rust; supports `--in-diff`) and `mutmut` (Python). Each ships only once validated end to end.
 - **`dependency-cruiser` engine** for JS/TS dependency rules, alongside ast-grep.

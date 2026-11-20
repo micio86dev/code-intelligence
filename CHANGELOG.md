@@ -4,6 +4,13 @@ All notable changes to this project are documented here. Format based on [Keep a
 
 ## [Unreleased]
 
+## [0.1.5]
+
+### Changed
+
+- Releases are now published to npm by the release workflow (trusted publishing, with a provenance attestation). Versions up to 0.1.4 were published by hand.
+- Tests: a Windows-only test checks, on a real volume, that every spelling the operating system resolves to `.git` is a protected path; the evidence is recorded in `docs/security.md`.
+
 ## [0.1.4]
 
 ### Fixed

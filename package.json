@@ -1,6 +1,6 @@
 {
   "name": "code-intelligence",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Agent-agnostic CLI that runs mature security and quality scanners on what changed, normalizes the findings, and reports only what matters.",
   "license": "MIT",
   "author": "micio86dev",
