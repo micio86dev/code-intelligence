@@ -122,7 +122,7 @@ test("every spelling the OS really resolves to .git on a real Windows volume is 
       encoding: "utf8",
     });
     const short = /<DIR>\s+(\S+~\d+)\s+\.git\s*$/im.exec(listing)?.[1];
-    const same = (a: ReturnType<typeof statSync>, b: ReturnType<typeof statSync>) =>
+    const same = (a: import("node:fs").Stats, b: import("node:fs").Stats) =>
       a.ino === b.ino && a.dev === b.dev;
     const dirSpellings = [
       ".git",
@@ -138,7 +138,7 @@ test("every spelling the OS really resolves to .git on a real Windows volume is 
         [sp, realDir],
         [`${sp}/config`, realConfig],
       ] as const) {
-        let st: ReturnType<typeof statSync> | undefined;
+        let st: import("node:fs").Stats | undefined;
         try {
           st = statSync(join(dir, rel));
         } catch {
