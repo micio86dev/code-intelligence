@@ -133,6 +133,8 @@ The CLI is the same everywhere; only the one-time wiring differs. [code-intellig
 - SAST findings on lines you did not touch are hidden in changed-file scans (and the count is printed). Use `--all` to see them.
 - `osv-scanner` and `semgrep` registry rulesets need network access. See [docs/security.md](docs/security.md) for exactly what leaves your machine.
 - Result caching only applies to engines whose output is a pure function of file contents (gitleaks; semgrep with local rules). With default settings the gain is small. See [docs/performance.md](docs/performance.md).
+- Changed-file scans do not descend into git **submodules** (a nested repository carries its own configuration, which would be executable surface); scan the submodule's own repository.
+- A repository can configure a scan to find less. Every report lists what the repository supplied (`config.inEffect`), and `--ignore-repo-config` discards it. Inline `gitleaks:allow` / `nosemgrep` comments cannot be disabled; they are counted and disclosed.
 
 ## Disable or remove
 

@@ -8,19 +8,43 @@ import { compileGlobs } from "./glob.ts";
 const GIT_TIMEOUT = 30_000;
 // A repository can carry its own git configuration (a copied or extracted .git directory). Neutralize the
 // settings that make `git diff`/`ls-files` run external programs: fsmonitor hooks and textconv/external diff.
-const GIT = ["-c", "core.quotepath=off", "-c", "core.fsmonitor=false", "-c", "diff.external="];
+const GIT = [
+  "-c",
+  "core.quotepath=off",
+  "-c",
+  "core.fsmonitor=false",
+  "-c",
+  "diff.external=",
+  // `git diff` spawns `git status` inside submodules, which reads the submodule's own .git/config:
+  // a second configuration we cannot pre-scan. Never descend into nested repositories.
+  "-c",
+  "diff.ignoreSubmodules=all",
+];
 
-const filterOverrideCache = new Map<string, string[]>();
+interface GitHardening {
+  args: string[];
+  env: Record<string, string>;
+}
+const hardeningCache = new Map<string, GitHardening>();
+
+/** git >= 2.31 understands GIT_CONFIG_COUNT/KEY_n/VALUE_n. */
+async function supportsEnvConfig(cwd: string): Promise<boolean> {
+  const r = await exec("git", ["--version"], { cwd, timeoutMs: GIT_TIMEOUT });
+  const m = /(\d+)\.(\d+)/.exec(r.stdout);
+  return m ? Number(m[1]) > 2 || (Number(m[1]) === 2 && Number(m[2]) >= 31) : false;
+}
 
 /**
  * `git diff` against the working tree runs a repository's configured clean filters
  * (`filter.<name>.clean` in .git/config) to hash the files it compares, and --no-textconv does not stop that.
  * A copied or extracted .git directory can therefore run commands. Override every configured filter with an
- * empty command (verified to run nothing while the diff still computes). Users of git-lfs see raw content
- * instead of pointers for LFS-tracked files, which only changes line ranges for binaries.
+ * empty command (verified to run nothing while the diff still computes). The overrides go through
+ * GIT_CONFIG_COUNT/KEY/VALUE in the environment: `-c filter.a=b.clean=` cannot express a filter *named*
+ * `a=b` (git splits at the first `=`), which an attacker can choose. Users of git-lfs see raw content instead
+ * of pointers for LFS-tracked files, which only changes line ranges for binaries.
  */
-async function filterOverrides(cwd: string): Promise<string[]> {
-  const hit = filterOverrideCache.get(cwd);
+async function hardening(cwd: string): Promise<GitHardening> {
+  const hit = hardeningCache.get(cwd);
   if (hit) return hit;
   const r = await exec("git", [...GIT, "config", "--get-regexp", "^filter\\."], {
     cwd,
@@ -31,24 +55,39 @@ async function filterOverrides(cwd: string): Promise<string[]> {
     const m = /^filter\.(.+)\.(?:clean|smudge|process|required)(?:\s|$)/.exec(line);
     if (m?.[1]) names.add(m[1]);
   }
-  const args = [...names].flatMap((n) => [
-    "-c",
-    `filter.${n}.clean=`,
-    "-c",
-    `filter.${n}.smudge=`,
-    "-c",
-    `filter.${n}.process=`,
+  const keys = [...names].flatMap((n) => [
+    `filter.${n}.clean`,
+    `filter.${n}.smudge`,
+    `filter.${n}.process`,
   ]);
-  filterOverrideCache.set(cwd, args);
-  return args;
+  const env: Record<string, string> = {};
+  if (keys.length > 0) {
+    if ([...names].some((n) => n.includes("=")) && !(await supportsEnvConfig(cwd))) {
+      throw new UsageError(
+        "This repository defines git filters that this git version cannot neutralize safely; upgrade git to 2.31 or newer",
+      );
+    }
+    env.GIT_CONFIG_COUNT = String(keys.length);
+    keys.forEach((k, i) => {
+      env[`GIT_CONFIG_KEY_${i}`] = k;
+      env[`GIT_CONFIG_VALUE_${i}`] = "";
+    });
+  }
+  // Old git ignores the environment form, so names without '=' are also passed with -c (belt and braces).
+  const args = keys.filter((k) => !k.slice(7).includes("=")).flatMap((k) => ["-c", `${k}=`]);
+  const result = { args, env };
+  hardeningCache.set(cwd, result);
+  return result;
 }
 
 async function git(
   cwd: string,
   args: string[],
 ): Promise<{ ok: boolean; out: string; err: string }> {
-  const r = await exec("git", [...GIT, ...(await filterOverrides(cwd)), ...args], {
+  const h = await hardening(cwd);
+  const r = await exec("git", [...GIT, ...h.args, ...args], {
     cwd,
+    env: h.env,
     timeoutMs: GIT_TIMEOUT,
   });
   if (r.spawnError)
@@ -158,7 +197,16 @@ export async function resolveTarget(opts: TargetOptions): Promise<ScanTarget> {
     );
   } else if (mode === "staged") {
     rels = splitZ(
-      (await git(root, ["diff", "--cached", "--name-only", "-z", "--diff-filter=ACMR"])).out,
+      (
+        await git(root, [
+          "diff",
+          "--cached",
+          "--name-only",
+          "--ignore-submodules=all",
+          "-z",
+          "--diff-filter=ACMR",
+        ])
+      ).out,
     );
     diffArgs = [
       "diff",
@@ -166,6 +214,7 @@ export async function resolveTarget(opts: TargetOptions): Promise<ScanTarget> {
       "-U0",
       "--no-color",
       "--no-ext-diff",
+      "--ignore-submodules=all",
       "--no-textconv",
       "--diff-filter=ACMR",
     ];
@@ -186,7 +235,14 @@ export async function resolveTarget(opts: TargetOptions): Promise<ScanTarget> {
         (await git(root, ["ls-files", "-z", "--cached", "--others", "--exclude-standard"])).out,
       );
     } else {
-      const tracked = await git(root, ["diff", "--name-only", "-z", "--diff-filter=ACMR", base]);
+      const tracked = await git(root, [
+        "diff",
+        "--name-only",
+        "--ignore-submodules=all",
+        "-z",
+        "--diff-filter=ACMR",
+        base,
+      ]);
       if (!tracked.ok)
         throw new UsageError(`git diff failed: ${tracked.err.trim().split("\n")[0]}`);
       rels = [...splitZ(tracked.out), ...untracked];
@@ -195,6 +251,7 @@ export async function resolveTarget(opts: TargetOptions): Promise<ScanTarget> {
         "-U0",
         "--no-color",
         "--no-ext-diff",
+        "--ignore-submodules=all",
         "--no-textconv",
         "--diff-filter=ACMR",
         base,

@@ -236,3 +236,71 @@ test("a hostile .git/config clean filter is not executed by diff (verifier reche
   assert.deepEqual(t.changedLines.get("a.txt"), [{ start: 2, end: 2 }], "the diff still computes");
   assert.equal(existsSync(marker), false, "code-intel must not run the repository's clean filter");
 });
+
+test("a filter whose NAME contains '=' is neutralized too (verifier spot-check C1)", {
+  skip: process.platform === "win32",
+}, async () => {
+  const { chmodSync, existsSync, rmSync, writeFileSync, appendFileSync } = await import("node:fs");
+  const { execFileSync } = await import("node:child_process");
+  const { join } = await import("node:path");
+  const p = mk({ "a.txt": "one\n", ".gitattributes": "* filter=a=b\n" });
+  p.commit();
+  const helper = mk({}, { git: false });
+  const marker = join(helper.dir, "PWNED");
+  const script = join(helper.dir, "clean.sh");
+  writeFileSync(script, `#!/bin/sh\ntouch "${marker}"\ncat\n`);
+  chmodSync(script, 0o755);
+  // `git config` refuses odd names, so write the section by hand, as a hostile .git/config would.
+  appendFileSync(join(p.dir, ".git", "config"), `[filter "a=b"]\n\tclean = ${script}\n`);
+  writeFileSync(join(p.dir, "a.txt"), "one\ntwo\n");
+
+  execFileSync("git", ["diff", "HEAD"], { cwd: p.dir, env: GIT_ENV, stdio: "ignore" });
+  assert.equal(existsSync(marker), true, "precondition: plain git diff runs the filter named a=b");
+  rmSync(marker);
+
+  const t = await resolveTarget({ cwd: p.dir, mode: "changed", ref: null, exclude: EXCL });
+  assert.deepEqual(t.changedLines.get("a.txt"), [{ start: 2, end: 2 }]);
+  assert.equal(existsSync(marker), false, "the '='-named filter must not run");
+});
+
+test("a filter in a nested repository or submodule is never consulted (verifier spot-check C2)", {
+  skip: process.platform === "win32",
+}, async () => {
+  const { chmodSync, existsSync, mkdirSync, rmSync, writeFileSync, appendFileSync } = await import(
+    "node:fs"
+  );
+  const { execFileSync } = await import("node:child_process");
+  const { join } = await import("node:path");
+  const p = mk({ "top.js": "top\n" });
+  // A nested repository added as a gitlink, with its own hostile config.
+  const sub = join(p.dir, "sub");
+  mkdirSync(sub);
+  execFileSync("git", ["init", "-q", "-b", "main", "--template="], { cwd: sub, env: GIT_ENV });
+  writeFileSync(join(sub, "f.js"), "one\n");
+  writeFileSync(join(sub, ".gitattributes"), "* filter=pwn\n");
+  git(sub, "add", "-A");
+  git(sub, "commit", "-q", "--no-verify", "--no-gpg-sign", "-m", "sub");
+  git(p.dir, "add", "-A");
+  git(p.dir, "commit", "-q", "--no-verify", "--no-gpg-sign", "-m", "with gitlink");
+  const helper = mk({}, { git: false });
+  const marker = join(helper.dir, "PWNED");
+  const script = join(helper.dir, "clean.sh");
+  writeFileSync(script, `#!/bin/sh\ntouch "${marker}"\ncat\n`);
+  chmodSync(script, 0o755);
+  appendFileSync(join(sub, ".git", "config"), `[filter "pwn"]\n\tclean = ${script}\n`);
+  // Same size on purpose: a size change lets git decide "modified" from stat data alone, so whether it hashes
+  // the file (and therefore runs the clean filter) would depend on timing. Equal size forces a content check.
+  writeFileSync(join(sub, "f.js"), "two\n");
+
+  execFileSync("git", ["diff", "HEAD"], { cwd: p.dir, env: GIT_ENV, stdio: "ignore" });
+  assert.equal(
+    existsSync(marker),
+    true,
+    "precondition: a plain git diff in the parent runs the submodule's filter",
+  );
+  rmSync(marker);
+
+  await resolveTarget({ cwd: p.dir, mode: "changed", ref: null, exclude: EXCL });
+  await resolveTarget({ cwd: p.dir, mode: "since", ref: "HEAD", exclude: EXCL });
+  assert.equal(existsSync(marker), false, "code-intel must not run a nested repository's filter");
+});
