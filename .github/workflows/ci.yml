@@ -85,7 +85,8 @@ jobs:
       - run: npm run build
       - run: .github/scripts/install-engines.sh
       - name: Scan this repository
-        run: node dist/cli.js scan --all --no-cache --format sarif > results.sarif
+        # Medium and above fails the build (the CLI default is high); dependency advisories count too.
+        run: node dist/cli.js scan --all --no-cache --fail-on medium --format sarif > results.sarif
       - name: Upload SARIF
         if: always() && github.event_name == 'push'
         continue-on-error: true # code scanning may be unavailable on forks / private mirrors

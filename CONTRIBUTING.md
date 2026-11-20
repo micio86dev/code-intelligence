@@ -37,6 +37,17 @@ CI runs the unit tests on Linux, macOS and Windows (Node 22 and 24), the engine-
 - Zero runtime dependencies is a goal. Justify any addition.
 - Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `chore:`).
 
+## Mutation testing this project
+
+`code-intel mutate` works on this repository too. StrykerJS is deliberately **not** a dependency here (its transitive packages carried open advisories when last checked, and the committed lockfile must stay clean), so install it temporarily:
+
+```bash
+npm install --no-save @stryker-mutator/core@10.1.1
+npm run build && node dist/cli.js mutate src/core/glob.ts      # about 5 minutes
+```
+
+`stryker.config.json` runs the unit tests and sets `tsconfigFile` to a non-existent file because this project uses TypeScript 7 (see docs/troubleshooting.md). The recorded results are in `bench/results/mutation-self.json`. A surviving mutant is a missing test: add one for it and re-run.
+
 ## Benchmarks
 
 `node bench/run.mjs` reproduces `docs/benchmarks.md` (needs network and the engines). Do not edit numbers by hand.
