@@ -139,12 +139,12 @@ for (const [n, r] of rows) {
       .map(([k, v]) => `${v} ${k}`)
       .join(", ") || "none";
   p(
-    `| ${n} | ${raw.gitleaks} → ${e.gitleaks?.findings ?? "n/a"} | ${raw.semgrep} → ${e.semgrep?.findings ?? "n/a"} | ${raw["osv-scanner"]} → ${e["osv-scanner"]?.findings ?? "n/a"} | ${sev} |`,
+    `| ${n} | ${raw.gitleaks} → ${e.gitleaks?.findings ?? "n/a"} | ${raw.semgrep} → ${e.semgrep?.findings ?? "n/a"} | ${raw["osv-scanner"] ?? "n/a"} → ${e["osv-scanner"]?.findings ?? "n/a"} | ${sev} |`,
   );
 }
 p();
 p(
-  '"raw" is what the tool prints when run by hand; "code-intel" is after normalization (the same issue reported by two engines becomes one finding, and `--exclude` globs such as `dist/` and `vendor/` apply). Small differences are expected and explained by those two effects.',
+  '"raw" is what each tool prints when run by hand; "code-intel" is the same engine\'s count through `code-intel` **before** cross-engine merging (so these columns compare like with like). "n/a" means the tool found nothing to scan (osv-scanner prints no result when a repository has no lockfile). The severity column is **after** normalization: the same secret reported by two engines becomes one finding, so it can be lower than the sum of the columns. Differences between "raw" and "code-intel" come from `exclude` globs such as `dist/` and `vendor/`, which apply to `code-intel` only.',
 );
 p();
 if (R.defectInjection) {
@@ -160,51 +160,54 @@ if (R.defectInjection) {
   for (const [k, v] of Object.entries(d.detection)) p(`| ${k} | ${v ? "yes" : "**no**"} |`);
   p();
   p(
-    `**${d.detected} of ${d.total} detected.** The misses are limits of the engines' rules, not of the pipeline: raw semgrep reported ${d.rawSemgrepFindingsOnInjectedFiles} findings on exactly those files, and ${d.rawSemgrepFindingsMissingFromCodeIntel.length} of them were missing from the \`code-intel\` output (${d.rawSemgrepFindingsMissingFromCodeIntel.length === 0 ? "none lost" : d.rawSemgrepFindingsMissingFromCodeIntel.join("; ")}). Semgrep's \`p/default\` child-process rule matches some call shapes and not others, which is why the two spellings of the same injection are listed separately. A clean report means "these rules found nothing", never "this code is safe".`,
+    `**${d.detected} of ${d.total} detected.** The misses are limits of the engines' rules, not of the pipeline: raw semgrep reported ${d.rawSemgrepFindingsOnInjectedFiles} findings on exactly those files, and ${d.rawSemgrepFindingsMissingFromCodeIntel.length} of them were missing from the \`code-intel\` output (${d.rawSemgrepFindingsMissingFromCodeIntel.length === 0 ? "none lost" : d.rawSemgrepFindingsMissingFromCodeIntel.join("; ")}); ${d.rawSemgrepFindingsMergedIntoOtherEngine ?? 0} of those ${d.rawSemgrepFindingsOnInjectedFiles} is reported as a single merged finding because gitleaks reported the same secret on the same line (credited in \`alsoReportedBy\`). Semgrep's \`p/default\` child-process rule matches some call shapes and not others, which is why the two spellings of the same injection are listed separately. A clean report means "these rules found nothing", never "this code is safe".`,
   );
   p();
 }
 if (T) {
   p("## Precision (false positives)");
   p();
+  p(`Reviewed by: ${T.reviewedBy}.`);
+  p();
   p(T.method);
   p();
-  p("| Repository | Findings reviewed | Judged real | Judged false / noise | Notes |");
-  p("|---|---:|---:|---:|---|");
-  for (const x of T.repos)
-    p(`| ${x.name} | ${x.reviewed} | ${x.real} | ${x.falsePositive} | ${x.notes} |`);
+  p("| Repository | Findings reviewed | Real | Accurate but low value | False positive | Notes |");
+  p("|---|---:|---:|---:|---:|---|");
+  let rv = 0;
+  let re = 0;
+  let lv = 0;
+  let fp = 0;
+  for (const x of T.repos) {
+    p(
+      `| ${x.name} | ${x.reviewed} | ${x.real} | ${x.lowValue} | ${x.falsePositive} | ${x.notes} |`,
+    );
+    rv += x.reviewed;
+    re += x.real;
+    lv += x.lowValue;
+    fp += x.falsePositive;
+  }
+  const pct = (n) => `${((n / rv) * 100).toFixed(0)}%`;
   p();
-  if (T.summary) p(T.summary);
+  p(
+    `**Across ${rv} reviewed findings: ${re} real (${pct(re)}), ${lv} accurate but low value (${pct(lv)}), ${fp} false positive (${pct(fp)}).** Read this as: on well-maintained libraries scanned across the whole repository, most pattern findings sit in example code or reflect intentional design, and the tool's value there is the small actionable fraction plus the dependency advisories. This is why the default scope is the files you changed, why SAST findings on untouched lines are hidden, and why the same secret reported by two engines is merged. The sample is small (two repositories) and the judgments are mine.`,
+  );
   p();
+  const K = T.knownVulnerabilitySpotCheck;
+  if (K) {
+    p(`### Known-vulnerability spot check (${K.repo})`);
+    p();
+    p(`${K.note} **${K.detected} of ${K.expected} detected.**`);
+    p();
+    p("| File | Detected | By |");
+    p("|---|:--:|---|");
+    for (const d of K.detail)
+      p(`| ${d.file} | ${d.detected ? "yes" : "**no**"} | ${d.by ?? "no finding reported"} |`);
+    p();
+  }
 } else {
   p("## Precision (false positives)");
   p();
   p("Not measured in this run. No triage file was provided, so no false-positive rate is claimed.");
-  p();
-}
-const mutPath = join(here, "results/mutation-self.json");
-if (existsSync(mutPath)) {
-  const M = JSON.parse(readFileSync(mutPath, "utf8"));
-  p("## Mutation testing (dogfood)");
-  p();
-  p(
-    `\`code-intel mutate\` run on this project's own most security-critical module, ${M.target}, using ${M.testCommand}. Engine: ${M.engine}.`,
-  );
-  p();
-  p("| | Mutants | Detected (killed + timeout) | Survived | Mutation score | Wall time |");
-  p("|---|---:|---:|---:|---:|---:|");
-  for (const [label, r] of [
-    ["Before", M.before],
-    ["After adding tests for the survivors", M.after],
-  ]) {
-    p(
-      `| ${label} | ${r.mutants} | ${r.killed + r.timeout} | ${r.survived} | ${r.scorePercent}% | ${Math.floor(r.durationSeconds / 60)} min ${r.durationSeconds % 60} s |`,
-    );
-  }
-  p();
-  p(
-    `A survivor is a behavior change the tests did not notice. The survivors of the first run pointed at specific untested behavior (nested braces, the exact brace-expansion cap, \`**\` versus \`**/\`, negated character classes), and tests written for those moved the score from ${M.before.scorePercent}% to ${M.after.scorePercent}% on the same ${M.after.mutants} mutants. ${M.notes}`,
-  );
   p();
 }
 p("## What is not measured");

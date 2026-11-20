@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-19",
+  "generatedAt": "2026-11-20",
   "machine": {
     "os": "darwin 27.2.0",
     "cpus": 18,
@@ -18,23 +18,23 @@
       "kind": "small (TypeScript)",
       "commit": "6d70d25",
       "trackedFiles": 55,
-      "loadAvg1mAtStart": 16.17,
+      "loadAvg1mAtStart": 2.47,
       "manualSequentialFullScan": {
         "wallMs": {
-          "runs": [2560, 2533, 2562],
-          "median": 2560,
-          "min": 2533,
-          "max": 2562
+          "runs": [2327, 2259, 2173],
+          "median": 2259,
+          "min": 2173,
+          "max": 2327
         },
         "perToolMedianMs": {
-          "gitleaks": 29,
-          "semgrep": 2071,
-          "osv-scanner": 444
+          "gitleaks": 26,
+          "semgrep": 1699,
+          "osv-scanner": 543
         },
         "peakRssMb": {
-          "gitleaks": 50,
-          "semgrep": 387,
-          "osv-scanner": 55
+          "gitleaks": 49,
+          "semgrep": 384,
+          "osv-scanner": 54
         },
         "findings": {
           "gitleaks": 0,
@@ -44,12 +44,12 @@
       },
       "codeIntelFullCold": {
         "wallMs": {
-          "runs": [2922, 2941, 3166],
-          "median": 2941,
-          "min": 2922,
-          "max": 3166
+          "runs": [1842, 1827, 1837],
+          "median": 1837,
+          "min": 1827,
+          "max": 1842
         },
-        "peakRssMb": 380,
+        "peakRssMb": 379,
         "complete": true,
         "exitCode": 0,
         "findings": 0,
@@ -63,35 +63,35 @@
         "engines": {
           "gitleaks": {
             "status": "ok",
-            "ms": 46,
+            "ms": 43,
             "findings": 0,
             "cached": false,
             "warnings": 0
           },
           "semgrep": {
             "status": "ok",
-            "ms": 2317,
+            "ms": 1720,
             "findings": 0,
             "cached": false,
             "warnings": 0
           },
           "osv-scanner": {
             "status": "ok",
-            "ms": 448,
+            "ms": 549,
             "findings": 0,
             "cached": false,
             "warnings": 0
           }
         },
-        "sumEngineMs": 2811
+        "sumEngineMs": 2312
       },
       "findingList": [],
       "codeIntelFullWarm": {
         "wallMs": {
-          "runs": [2888, 2859, 3395],
-          "median": 2888,
-          "min": 2859,
-          "max": 3395
+          "runs": [1787, 1807, 1786],
+          "median": 1787,
+          "min": 1786,
+          "max": 1807
         },
         "complete": true,
         "exitCode": 0,
@@ -106,37 +106,37 @@
         "engines": {
           "gitleaks": {
             "status": "ok",
-            "ms": 2,
+            "ms": 1,
             "findings": 0,
             "cached": true,
             "warnings": 0
           },
           "semgrep": {
             "status": "ok",
-            "ms": 2543,
+            "ms": 1728,
             "findings": 0,
             "cached": false,
             "warnings": 0
           },
           "osv-scanner": {
             "status": "ok",
-            "ms": 473,
+            "ms": 521,
             "findings": 0,
             "cached": false,
             "warnings": 0
           }
         },
-        "sumEngineMs": 3018
+        "sumEngineMs": 2250
       },
       "codeIntelIncrementalOneFile": {
         "file": "src/cli.ts",
         "wallMs": {
-          "runs": [2802, 2970, 2673],
-          "median": 2802,
-          "min": 2673,
-          "max": 2970
+          "runs": [1651, 1714, 1652],
+          "median": 1652,
+          "min": 1651,
+          "max": 1714
         },
-        "peakRssMb": 295,
+        "peakRssMb": 293,
         "complete": true,
         "exitCode": 0,
         "findings": 0,
@@ -150,14 +150,14 @@
         "engines": {
           "gitleaks": {
             "status": "ok",
-            "ms": 20,
+            "ms": 16,
             "findings": 0,
             "cached": false,
             "warnings": 0
           },
           "semgrep": {
             "status": "ok",
-            "ms": 1871,
+            "ms": 1580,
             "findings": 0,
             "cached": false,
             "warnings": 0
@@ -170,30 +170,30 @@
             "warnings": 0
           }
         },
-        "sumEngineMs": 1891
+        "sumEngineMs": 1596
       },
-      "loadAvg1mAtEnd": 14.55
+      "loadAvg1mAtEnd": 3.37
     },
     "express": {
       "kind": "medium (JavaScript)",
       "commit": "43fca52",
       "trackedFiles": 216,
-      "loadAvg1mAtStart": 14.55,
+      "loadAvg1mAtStart": 3.37,
       "manualSequentialFullScan": {
         "wallMs": {
-          "runs": [2403, 2405, 2510],
-          "median": 2405,
-          "min": 2403,
-          "max": 2510
+          "runs": [1994, 2027, 2046],
+          "median": 2027,
+          "min": 1994,
+          "max": 2046
         },
         "perToolMedianMs": {
-          "gitleaks": 66,
-          "semgrep": 2298,
-          "osv-scanner": 41
+          "gitleaks": 58,
+          "semgrep": 1930,
+          "osv-scanner": 38
         },
         "peakRssMb": {
           "gitleaks": 62,
-          "semgrep": 394,
+          "semgrep": 390,
           "osv-scanner": 49
         },
         "findings": {
@@ -204,12 +204,12 @@
       },
       "codeIntelFullCold": {
         "wallMs": {
-          "runs": [3320, 3284, 3267],
-          "median": 3284,
-          "min": 3267,
-          "max": 3320
+          "runs": [2044, 2053, 2083],
+          "median": 2053,
+          "min": 2044,
+          "max": 2083
         },
-        "peakRssMb": 393,
+        "peakRssMb": 390,
         "complete": true,
         "exitCode": 0,
         "findings": 45,
@@ -223,14 +223,14 @@
         "engines": {
           "gitleaks": {
             "status": "ok",
-            "ms": 130,
+            "ms": 119,
             "findings": 0,
             "cached": false,
             "warnings": 0
           },
           "semgrep": {
             "status": "findings",
-            "ms": 2381,
+            "ms": 1967,
             "findings": 45,
             "cached": false,
             "warnings": 1
@@ -243,7 +243,7 @@
             "warnings": 0
           }
         },
-        "sumEngineMs": 2511
+        "sumEngineMs": 2086
       },
       "findingList": [
         {
@@ -564,10 +564,10 @@
       ],
       "codeIntelFullWarm": {
         "wallMs": {
-          "runs": [3182, 3405, 3803],
-          "median": 3405,
-          "min": 3182,
-          "max": 3803
+          "runs": [2040, 1984, 2032],
+          "median": 2032,
+          "min": 1984,
+          "max": 2040
         },
         "complete": true,
         "exitCode": 0,
@@ -582,14 +582,14 @@
         "engines": {
           "gitleaks": {
             "status": "ok",
-            "ms": 10,
+            "ms": 4,
             "findings": 0,
             "cached": true,
             "warnings": 0
           },
           "semgrep": {
             "status": "findings",
-            "ms": 2687,
+            "ms": 1957,
             "findings": 45,
             "cached": false,
             "warnings": 1
@@ -602,17 +602,17 @@
             "warnings": 0
           }
         },
-        "sumEngineMs": 2697
+        "sumEngineMs": 1961
       },
       "codeIntelIncrementalOneFile": {
         "file": "examples/auth/index.js",
         "wallMs": {
-          "runs": [2763, 2742, 2860],
-          "median": 2763,
-          "min": 2742,
-          "max": 2860
+          "runs": [1736, 1733, 1733],
+          "median": 1733,
+          "min": 1733,
+          "max": 1736
         },
-        "peakRssMb": 298,
+        "peakRssMb": 295,
         "complete": true,
         "exitCode": 0,
         "findings": 0,
@@ -626,14 +626,14 @@
         "engines": {
           "gitleaks": {
             "status": "ok",
-            "ms": 20,
+            "ms": 17,
             "findings": 0,
             "cached": false,
             "warnings": 0
           },
           "semgrep": {
             "status": "findings",
-            "ms": 2033,
+            "ms": 1656,
             "findings": 7,
             "cached": false,
             "warnings": 0
@@ -646,31 +646,31 @@
             "warnings": 0
           }
         },
-        "sumEngineMs": 2053
+        "sumEngineMs": 1673
       },
-      "loadAvg1mAtEnd": 12.87
+      "loadAvg1mAtEnd": 3.41
     },
     "flask": {
       "kind": "medium (Python)",
       "commit": "49943b5",
       "trackedFiles": 236,
-      "loadAvg1mAtStart": 12.87,
+      "loadAvg1mAtStart": 3.41,
       "manualSequentialFullScan": {
         "wallMs": {
-          "runs": [8256, 7762, 7788],
-          "median": 7788,
-          "min": 7762,
-          "max": 8256
+          "runs": [7579, 7156, 7330],
+          "median": 7330,
+          "min": 7156,
+          "max": 7579
         },
         "perToolMedianMs": {
-          "gitleaks": 99,
-          "semgrep": 2526,
-          "osv-scanner": 5164
+          "gitleaks": 93,
+          "semgrep": 2200,
+          "osv-scanner": 4960
         },
         "peakRssMb": {
-          "gitleaks": 68,
-          "semgrep": 419,
-          "osv-scanner": 79
+          "gitleaks": 67,
+          "semgrep": 416,
+          "osv-scanner": 80
         },
         "findings": {
           "gitleaks": 6,
@@ -680,12 +680,12 @@
       },
       "codeIntelFullCold": {
         "wallMs": {
-          "runs": [6117, 5509, 5802],
-          "median": 5802,
-          "min": 5509,
-          "max": 6117
+          "runs": [5426, 4812, 4534],
+          "median": 4812,
+          "min": 4534,
+          "max": 5426
         },
-        "peakRssMb": 419,
+        "peakRssMb": 416,
         "complete": true,
         "exitCode": 1,
         "findings": 75,
@@ -699,27 +699,27 @@
         "engines": {
           "gitleaks": {
             "status": "findings",
-            "ms": 172,
+            "ms": 166,
             "findings": 6,
             "cached": false,
             "warnings": 0
           },
           "semgrep": {
             "status": "findings",
-            "ms": 2464,
+            "ms": 2272,
             "findings": 16,
             "cached": false,
             "warnings": 1
           },
           "osv-scanner": {
             "status": "findings",
-            "ms": 4948,
+            "ms": 4396,
             "findings": 53,
             "cached": false,
             "warnings": 0
           }
         },
-        "sumEngineMs": 7584
+        "sumEngineMs": 6834
       },
       "findingList": [
         {
@@ -1250,10 +1250,10 @@
       ],
       "codeIntelFullWarm": {
         "wallMs": {
-          "runs": [5395, 19361, 19352],
-          "median": 19352,
-          "min": 5395,
-          "max": 19361
+          "runs": [4508, 4918, 4656],
+          "median": 4656,
+          "min": 4508,
+          "max": 4918
         },
         "complete": true,
         "exitCode": 1,
@@ -1268,37 +1268,37 @@
         "engines": {
           "gitleaks": {
             "status": "findings",
-            "ms": 7,
+            "ms": 5,
             "findings": 6,
             "cached": true,
             "warnings": 0
           },
           "semgrep": {
             "status": "findings",
-            "ms": 2253,
+            "ms": 2218,
             "findings": 16,
             "cached": false,
             "warnings": 1
           },
           "osv-scanner": {
             "status": "findings",
-            "ms": 18649,
+            "ms": 4568,
             "findings": 53,
             "cached": false,
             "warnings": 0
           }
         },
-        "sumEngineMs": 20909
+        "sumEngineMs": 6791
       },
       "codeIntelIncrementalOneFile": {
         "file": "docs/conf.py",
         "wallMs": {
-          "runs": [2297, 2248, 2252],
-          "median": 2252,
-          "min": 2248,
-          "max": 2297
+          "runs": [1720, 1689, 1677],
+          "median": 1689,
+          "min": 1677,
+          "max": 1720
         },
-        "peakRssMb": 301,
+        "peakRssMb": 302,
         "complete": true,
         "exitCode": 0,
         "findings": 0,
@@ -1312,14 +1312,14 @@
         "engines": {
           "gitleaks": {
             "status": "ok",
-            "ms": 19,
+            "ms": 18,
             "findings": 0,
             "cached": false,
             "warnings": 0
           },
           "semgrep": {
             "status": "ok",
-            "ms": 1615,
+            "ms": 1605,
             "findings": 0,
             "cached": false,
             "warnings": 1
@@ -1332,30 +1332,30 @@
             "warnings": 0
           }
         },
-        "sumEngineMs": 1634
+        "sumEngineMs": 1623
       },
-      "loadAvg1mAtEnd": 5.44
+      "loadAvg1mAtEnd": 2.87
     },
     "juice-shop": {
       "kind": "large, multi-language, intentionally vulnerable (TypeScript/JavaScript/HTML/YAML)",
       "commit": "c9f9922",
       "trackedFiles": 1498,
-      "loadAvg1mAtStart": 5.44,
+      "loadAvg1mAtStart": 2.87,
       "manualSequentialFullScan": {
         "wallMs": {
-          "runs": [17196, 18224, 17493],
-          "median": 17493,
-          "min": 17196,
-          "max": 18224
+          "runs": [16169, 16648, 16277],
+          "median": 16277,
+          "min": 16169,
+          "max": 16648
         },
         "perToolMedianMs": {
-          "gitleaks": 1305,
-          "semgrep": 16061,
-          "osv-scanner": 59
+          "gitleaks": 1093,
+          "semgrep": 15113,
+          "osv-scanner": 56
         },
         "peakRssMb": {
-          "gitleaks": 115,
-          "semgrep": 951,
+          "gitleaks": 110,
+          "semgrep": 926,
           "osv-scanner": 53
         },
         "findings": {
@@ -1366,12 +1366,12 @@
       },
       "codeIntelFullCold": {
         "wallMs": {
-          "runs": [17514, 32281, 17578],
-          "median": 17578,
-          "min": 17514,
-          "max": 32281
+          "runs": [16248, 16064, 15837],
+          "median": 16064,
+          "min": 15837,
+          "max": 16248
         },
-        "peakRssMb": 926,
+        "peakRssMb": 928,
         "complete": true,
         "exitCode": 1,
         "findings": 140,
@@ -1385,14 +1385,14 @@
         "engines": {
           "gitleaks": {
             "status": "findings",
-            "ms": 1649,
+            "ms": 1620,
             "findings": 75,
             "cached": false,
             "warnings": 0
           },
           "semgrep": {
             "status": "findings",
-            "ms": 16581,
+            "ms": 15292,
             "findings": 71,
             "cached": false,
             "warnings": 1
@@ -1405,7 +1405,7 @@
             "warnings": 0
           }
         },
-        "sumEngineMs": 18230
+        "sumEngineMs": 16912
       },
       "findingList": [
         {
@@ -2391,10 +2391,10 @@
       ],
       "codeIntelFullWarm": {
         "wallMs": {
-          "runs": [17001, 17586, 16677],
-          "median": 17001,
-          "min": 16677,
-          "max": 17586
+          "runs": [15410, 15482, 15696],
+          "median": 15482,
+          "min": 15410,
+          "max": 15696
         },
         "complete": true,
         "exitCode": 1,
@@ -2409,14 +2409,14 @@
         "engines": {
           "gitleaks": {
             "status": "findings",
-            "ms": 45,
+            "ms": 40,
             "findings": 75,
             "cached": true,
             "warnings": 0
           },
           "semgrep": {
             "status": "findings",
-            "ms": 15989,
+            "ms": 15413,
             "findings": 71,
             "cached": false,
             "warnings": 1
@@ -2429,17 +2429,17 @@
             "warnings": 0
           }
         },
-        "sumEngineMs": 16034
+        "sumEngineMs": 15453
       },
       "codeIntelIncrementalOneFile": {
         "file": "app.ts",
         "wallMs": {
-          "runs": [2633, 2467, 2417],
-          "median": 2467,
-          "min": 2417,
-          "max": 2633
+          "runs": [1963, 1792, 1786],
+          "median": 1792,
+          "min": 1786,
+          "max": 1963
         },
-        "peakRssMb": 296,
+        "peakRssMb": 295,
         "complete": true,
         "exitCode": 0,
         "findings": 0,
@@ -2453,14 +2453,14 @@
         "engines": {
           "gitleaks": {
             "status": "ok",
-            "ms": 17,
+            "ms": 16,
             "findings": 0,
             "cached": false,
             "warnings": 0
           },
           "semgrep": {
             "status": "ok",
-            "ms": 1766,
+            "ms": 1705,
             "findings": 0,
             "cached": false,
             "warnings": 0
@@ -2473,9 +2473,9 @@
             "warnings": 0
           }
         },
-        "sumEngineMs": 1783
+        "sumEngineMs": 1721
       },
-      "loadAvg1mAtEnd": 7
+      "loadAvg1mAtEnd": 6.53
     }
   },
   "defectInjection": {
@@ -2489,12 +2489,11 @@
     },
     "detected": 5,
     "total": 6,
-    "wallMs": 2376,
+    "wallMs": 1866,
     "exitCode": 1,
     "rawSemgrepFindingsOnInjectedFiles": 4,
-    "rawSemgrepFindingsMissingFromCodeIntel": [
-      "lib/injected-secret.js:1:generic.secrets.security.detected-aws-access-key-id-value.detected-aws-access-key-id-value"
-    ],
+    "rawSemgrepFindingsMissingFromCodeIntel": [],
+    "rawSemgrepFindingsMergedIntoOtherEngine": 1,
     "ruleIdsReported": [
       "semgrep:javascript.lang.security.detect-child-process.detect-child-process",
       "gitleaks:aws-access-token",

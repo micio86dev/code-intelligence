@@ -171,19 +171,23 @@ function summarize(j) {
   };
 }
 
-const results = {
-  generatedAt: new Date().toISOString().slice(0, 10),
-  machine: {
-    os: `${platform()} ${release()}`,
-    cpus: cpus().length,
-    cpuModel: cpus()[0]?.model ?? "unknown",
-    memGB: Math.round(totalmem() / 2 ** 30),
-  },
-  node: process.version,
-  runsPerScenario: RUNS,
-  tools: {},
-  repos: {},
-};
+// --only-injection re-runs just the defect-injection step and merges it into an existing results file.
+const ONLY_INJECTION = args.includes("--only-injection");
+const results = ONLY_INJECTION
+  ? JSON.parse(readFileSync(OUT, "utf8"))
+  : {
+      generatedAt: new Date().toISOString().slice(0, 10),
+      machine: {
+        os: `${platform()} ${release()}`,
+        cpus: cpus().length,
+        cpuModel: cpus()[0]?.model ?? "unknown",
+        memGB: Math.round(totalmem() / 2 ** 30),
+      },
+      node: process.version,
+      runsPerScenario: RUNS,
+      tools: {},
+      repos: {},
+    };
 for (const [k, c] of Object.entries({
   gitleaks: ["version"],
   semgrep: ["--version"],
@@ -192,7 +196,7 @@ for (const [k, c] of Object.entries({
   results.tools[k] = (spawnSync(k, c, { encoding: "utf8" }).stdout ?? "").trim().split("\n")[0];
 }
 
-for (const r of CORPUS) {
+for (const r of ONLY_INJECTION ? [] : CORPUS) {
   console.error(`== ${r.name}`);
   const { dir, sha, files } = ensureRepo(r);
   const out = {
@@ -350,15 +354,30 @@ if (results.repos.express) {
     ],
     { cwd: dir, env, encoding: "utf8", maxBuffer: 1 << 28 },
   );
-  const rawIds = new Set(
-    JSON.parse(raw.stdout).results.map((x) => `${x.path}:${x.start.line}:${x.check_id}`),
-  );
-  const ours = new Set(
-    j.findings
-      .filter((f) => f.engine === "semgrep" || f.alsoReportedBy.includes("semgrep"))
-      .map((f) => `${f.file}:${f.line}:${f.ruleId}`),
-  );
-  const lost = [...rawIds].filter((x) => !ours.has(x));
+  const rawEntries = JSON.parse(raw.stdout).results.map((x) => ({
+    path: x.path,
+    line: x.start.line,
+    id: x.check_id,
+  }));
+  const rawIds = new Set(rawEntries.map((x) => `${x.path}:${x.line}:${x.id}`));
+  // A raw semgrep finding is accounted for if code-intel reports the same rule there, or the same
+  // place with semgrep credited in `alsoReportedBy` (the same secret found by gitleaks and semgrep is merged).
+  const accounted = (x) =>
+    j.findings.some(
+      (f) =>
+        f.file === x.path &&
+        f.line === x.line &&
+        ((f.engine === "semgrep" && f.ruleId === x.id) || f.alsoReportedBy.includes("semgrep")),
+    );
+  const mergedIntoOtherEngine = rawEntries.filter(
+    (x) =>
+      accounted(x) &&
+      !j.findings.some(
+        (f) =>
+          f.file === x.path && f.line === x.line && f.engine === "semgrep" && f.ruleId === x.id,
+      ),
+  ).length;
+  const lost = rawEntries.filter((x) => !accounted(x)).map((x) => `${x.path}:${x.line}:${x.id}`);
   results.defectInjection = {
     detection,
     detected: Object.values(detection).filter(Boolean).length,
@@ -367,6 +386,7 @@ if (results.repos.express) {
     exitCode: run.code,
     rawSemgrepFindingsOnInjectedFiles: rawIds.size,
     rawSemgrepFindingsMissingFromCodeIntel: lost,
+    rawSemgrepFindingsMergedIntoOtherEngine: mergedIntoOtherEngine,
     ruleIdsReported: [...new Set(j.findings.map((f) => `${f.engine}:${f.ruleId}`))],
   };
   rmSync(tmp, { recursive: true, force: true });
