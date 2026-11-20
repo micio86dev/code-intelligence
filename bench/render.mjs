@@ -12,6 +12,11 @@ const triagePath = resolve(process.argv[3] ?? join(here, "results/triage.json"))
 const R = JSON.parse(readFileSync(resultsPath, "utf8"));
 const T = existsSync(triagePath) ? JSON.parse(readFileSync(triagePath, "utf8")) : null;
 const blindPath = join(dirname(triagePath), "triage-blind.json");
+const osDir = dirname(resultsPath);
+const readOpt = (f) =>
+  existsSync(join(osDir, f)) ? JSON.parse(readFileSync(join(osDir, f), "utf8")) : null;
+const LIN = readOpt("linux.json");
+const WIN = readOpt("os-timing-windows.json");
 const B = T && existsSync(blindPath) ? JSON.parse(readFileSync(blindPath, "utf8")) : null;
 
 const s = (ms) => `${(ms / 1000).toFixed(1)} s`;
@@ -239,9 +244,65 @@ if (T) {
   p("Not measured in this run. No triage file was provided, so no false-positive rate is claimed.");
   p();
 }
+if (LIN || WIN) {
+  p("## Other operating systems (GitHub-hosted runners)");
+  p();
+  p(
+    "Measured by the manual `Benchmarks` workflow on GitHub-hosted runners, which are shared virtual machines: use these numbers to see that the tool works and roughly how it scales on each OS, not to compare operating systems with one another or with the macOS machine above.",
+  );
+  p();
+}
+if (LIN) {
+  p(
+    `### Linux (${LIN.machine.os}, ${LIN.machine.cpus} CPUs, ${LIN.machine.memGB} GB, Node ${LIN.node}, ${LIN.generatedAt})`,
+  );
+  p();
+  p(
+    "| Repository | Files | Existing workflow (sequential) | code-intel full | code-intel / existing | code-intel, 1 file changed | Peak RSS (code-intel) |",
+  );
+  p("|---|---:|---:|---:|---:|---:|---:|");
+  for (const [n, r] of Object.entries(LIN.repos)) {
+    const m = r.manualSequentialFullScan;
+    const c = r.codeIntelFullCold;
+    const i = r.codeIntelIncrementalOneFile;
+    p(
+      `| ${n} | ${r.trackedFiles} | ${range(m.wallMs)} | ${range(c.wallMs)} | ${ratio(c.wallMs.median, m.wallMs.median)} | ${s(i.wallMs.median)} | ${c.peakRssMb ?? "n/a"} MB |`,
+    );
+  }
+  const d = LIN.defectInjection;
+  if (d) p(`\nDefect injection on Linux: ${d.detected} of ${d.total} planted defects detected.`);
+  p();
+}
+if (WIN) {
+  p(
+    `### Windows (${WIN.machine.os}, ${WIN.machine.cpus} CPUs, ${WIN.machine.memGB} GB, Node ${WIN.node}, ${WIN.generatedAt})`,
+  );
+  p();
+  p(
+    `Engines available: ${WIN.enginesAvailable.join(", ") || "none"}. **Not available on this runner: ${WIN.enginesMissing.join(", ") || "none"}.** Only the available engines were timed, on ${WIN.repository}, so these numbers say nothing about semgrep on Windows.`,
+  );
+  p();
+  p("| Scenario | Median | Runs |");
+  p("|---|---:|---|");
+  const names = {
+    gitleaksByHand: "gitleaks run by hand",
+    codeIntelSecretsOnly: "code-intel, secrets only",
+    codeIntelSecretsAndDeps: "code-intel, secrets and dependencies",
+    doctor: "code-intel doctor",
+  };
+  for (const [k, v] of Object.entries(WIN.scenarios))
+    p(
+      `| ${names[k] ?? k} | ${(v.median / 1000).toFixed(2)} s | ${v.runs.map((x) => (x / 1000).toFixed(2)).join(", ")} |`,
+    );
+  p();
+}
 p("## What is not measured");
 p();
-p("- Windows and Linux timings (all numbers above are from one macOS machine).");
+p(
+  LIN || WIN
+    ? "- Timings on dedicated hardware: the macOS numbers come from one workstation; Linux and Windows come from shared GitHub-hosted runners."
+    : "- Windows and Linux timings (all numbers above are from one macOS machine).",
+);
 p(
   "- `code-intel mutate` on the corpus repositories: mutation testing needs each project's dependencies installed and a tests-only test command. Its behavior is covered by integration tests instead (`test/integration/mutate.test.ts`), not by timing claims.",
 );

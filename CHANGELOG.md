@@ -4,6 +4,18 @@ All notable changes to this project are documented here. Format based on [Keep a
 
 ## [Unreleased]
 
+## [0.1.4]
+
+### Fixed
+
+- Error messages: absolute paths that an engine prints without the leading slash (osv-scanner prints `private/var/folders/...`) are now scrubbed, and a relative path such as `src/engines/x.ts` is no longer mangled into `src<path>`.
+- Protected paths (`baseline` setting): Windows aliases of `.git` and of `.code-intel.json` (trailing dots or spaces, NTFS stream suffixes, 8.3 short names) are now rejected like the real names.
+
+### Added
+
+- A manual `Benchmarks` workflow that measures Linux (full harness) and Windows (the engines that exist there) on GitHub-hosted runners, and a blind second triage pass in `docs/benchmarks.md`.
+- Release workflow: opt-in npm trusted publishing with provenance (set the repository variable `NPM_PUBLISH=true` after configuring a Trusted Publisher on npm).
+
 ## [0.1.3]
 
 ### Fixed

@@ -59,3 +59,46 @@ test("non-object config is rejected", () => {
   assert.equal(validateConfig([]).issues[0]?.path, "$");
   assert.equal(validateConfig("x").issues[0]?.path, "$");
 });
+
+test("protected paths: Windows aliases of .git and of the config file are protected too", async () => {
+  const { isProtectedPath } = await import("../../src/core/config.ts");
+  // Always protected (the original behavior)
+  for (const p of [
+    ".git/config",
+    ".GIT/hooks/x",
+    "a/../.git/config",
+    ".//.git/config",
+    ".code-intel.json",
+    ".CODE-INTEL.JSON",
+  ]) {
+    assert.equal(isProtectedPath(p), true, p);
+  }
+  // Windows resolves these to the same directory or file: trailing dots and spaces are dropped, a stream
+  // suffix selects an alternate view of the same entry, and 8.3 short names alias the long name.
+  for (const p of [
+    ".git./config",
+    ".git /config",
+    ".git::$INDEX_ALLOCATION/config",
+    ".git::$DATA",
+    "GIT~1/config",
+    "git~2/hooks/pre-commit",
+    "sub/.GIT.../x",
+    ".code-intel.json.",
+    ".code-intel.json::$DATA",
+    "CODE-I~1.JSO",
+  ]) {
+    assert.equal(isProtectedPath(p), true, p);
+  }
+  // Unchanged: ordinary paths, including ones that merely contain similar words.
+  for (const p of [
+    ".code-intel/baseline.json",
+    "git/readme.md",
+    "src/gitlike.ts",
+    "docs/.github/x.yml",
+    "my~notes.txt",
+    ".gitignore",
+    ".github/workflows/ci.yml",
+  ]) {
+    assert.equal(isProtectedPath(p), false, p);
+  }
+});

@@ -132,8 +132,34 @@ Intentionally vulnerable, so false positives are not meaningful there. Six place
 | routes/fileUpload.ts  |  **no**  | no finding reported                                          |
 | routes/b2bOrder.ts    |  **no**  | no finding reported                                          |
 
+## Other operating systems (GitHub-hosted runners)
+
+Measured by the manual `Benchmarks` workflow on GitHub-hosted runners, which are shared virtual machines: use these numbers to see that the tool works and roughly how it scales on each OS, not to compare operating systems with one another or with the macOS machine above.
+
+### Linux (linux 7.0.0-1020-azure, 4 CPUs, 16 GB, Node v24.22.3, 2026-11-20)
+
+| Repository | Files | Existing workflow (sequential) |        code-intel full | code-intel / existing | code-intel, 1 file changed | Peak RSS (code-intel) |
+| ---------- | ----: | -----------------------------: | ---------------------: | --------------------: | -------------------------: | --------------------: |
+| self       |    88 |            5.0 s (4.7 s–5.2 s) |    4.4 s (4.4 s–4.5 s) |                 0.88× |                      3.4 s |                275 MB |
+| express    |   216 |            4.5 s (4.4 s–5.2 s) |    4.3 s (4.3 s–4.4 s) |                 0.96× |                      3.6 s |                272 MB |
+| flask      |   236 |           9.0 s (8.6 s–10.2 s) |   9.1 s (6.3 s–11.5 s) |                 1.01× |                      3.4 s |                286 MB |
+| juice-shop |  1498 |         36.8 s (36.7 s–37.3 s) | 36.7 s (36.5 s–37.5 s) |                 1.00× |                      3.6 s |                711 MB |
+
+Defect injection on Linux: 5 of 6 planted defects detected.
+
+### Windows (win32 10.0.26100, 4 CPUs, 16 GB, Node v24.22.2, 2026-11-20)
+
+Engines available: gitleaks, osv-scanner. **Not available on this runner: semgrep, trivy, ast-grep.** Only the available engines were timed, on this repository (small, TypeScript), so these numbers say nothing about semgrep on Windows.
+
+| Scenario                             | Median | Runs             |
+| ------------------------------------ | -----: | ---------------- |
+| gitleaks run by hand                 | 0.46 s | 0.47, 0.46, 0.46 |
+| code-intel, secrets only             | 0.90 s | 0.99, 0.88, 0.90 |
+| code-intel, secrets and dependencies | 1.05 s | 1.05, 1.15, 0.91 |
+| code-intel doctor                    | 0.43 s | 0.43, 0.43, 0.45 |
+
 ## What is not measured
 
-- Windows and Linux timings (all numbers above are from one macOS machine).
+- Timings on dedicated hardware: the macOS numbers come from one workstation; Linux and Windows come from shared GitHub-hosted runners.
 - `code-intel mutate` on the corpus repositories: mutation testing needs each project's dependencies installed and a tests-only test command. Its behavior is covered by integration tests instead (`test/integration/mutate.test.ts`), not by timing claims.
 - Comparison with an LLM-only review. No LLM review was run, so no claim is made about detection versus one.

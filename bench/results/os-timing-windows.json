@@ -1,0 +1,40 @@
+{
+  "generatedAt": "2026-11-20",
+  "machine": {
+    "os": "win32 10.0.26100",
+    "cpus": 4,
+    "cpuModel": "AMD EPYC 9V74 80-Core Processor                ",
+    "memGB": 16
+  },
+  "node": "v24.22.2",
+  "runsPerScenario": 3,
+  "repository": "this repository (small, TypeScript)",
+  "enginesAvailable": ["gitleaks", "osv-scanner"],
+  "enginesMissing": ["semgrep", "trivy", "ast-grep"],
+  "scenarios": {
+    "gitleaksByHand": {
+      "runs": [470, 461, 464],
+      "median": 464,
+      "min": 461,
+      "max": 470
+    },
+    "codeIntelSecretsOnly": {
+      "runs": [986, 879, 898],
+      "median": 898,
+      "min": 879,
+      "max": 986
+    },
+    "codeIntelSecretsAndDeps": {
+      "runs": [1049, 1154, 913],
+      "median": 1049,
+      "min": 913,
+      "max": 1154
+    },
+    "doctor": {
+      "runs": [433, 430, 451],
+      "median": 433,
+      "min": 430,
+      "max": 451
+    }
+  }
+}

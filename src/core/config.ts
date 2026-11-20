@@ -91,16 +91,31 @@ function isRepoRelative(p: string): boolean {
   return p.length > 0 && !hasScheme && isSafeGlob(p) && !p.includes("\0");
 }
 
+/**
+ * What Windows treats as the same file system entry: trailing dots and spaces are dropped, an NTFS stream
+ * suffix ("::$DATA", "::$INDEX_ALLOCATION") selects another view of the same entry, and the 8.3 short name
+ * of ".git" is "GIT~1" (of ".code-intel.json" it is "CODE-I~1.JSO"). Case is irrelevant on Windows and macOS.
+ */
+function canonicalSegment(x: string): string {
+  return x
+    .replace(/::.*$/, "")
+    .replace(/[. ]+$/, "")
+    .toLowerCase();
+}
+
 /** Paths the tool must never write: git internals and its own configuration. */
-function isProtectedPath(p: string): boolean {
-  // Normalize first, then compare case-insensitively: `.//.git/config`, `a/../.git/config` and `.GIT/config`
-  // (a case-insensitive file system) all resolve into git's own directory.
+export function isProtectedPath(p: string): boolean {
+  // Normalize first, then compare canonical forms: `.//.git/config`, `a/../.git/config`, `.GIT/config` (a
+  // case-insensitive file system) and the Windows aliases above all resolve into git's own directory.
   const parts = posix
     .normalize(p.replace(/\\/g, "/"))
     .split("/")
-    .filter((x) => x && x !== ".");
-  if (parts.some((x) => x.toLowerCase() === ".git")) return true;
-  return parts.join("/").toLowerCase() === CONFIG_FILE.toLowerCase();
+    .filter((x) => x && x !== ".")
+    .map(canonicalSegment);
+  if (parts.some((x) => x === ".git" || /^git~\d+$/.test(x))) return true;
+  const last = parts[parts.length - 1] ?? "";
+  const rootFile = parts.length === 1 ? last : "";
+  return parts.join("/") === CONFIG_FILE.toLowerCase() || /^code-i~\d+(\.jso)?$/.test(rootFile);
 }
 
 function strArray(v: unknown, path: string, issues: Issue[]): string[] | null {
