@@ -102,3 +102,40 @@ test("protected paths: Windows aliases of .git and of the config file are protec
     assert.equal(isProtectedPath(p), false, p);
   }
 });
+
+test("Windows aliases of .git resolve to the real directory on a real volume, and are protected", {
+  skip: process.platform !== "win32",
+}, async () => {
+  const { execFileSync } = await import("node:child_process");
+  const { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const { isProtectedPath } = await import("../../src/core/config.ts");
+  const dir = mkdtempSync(join(tmpdir(), "ci-winalias-"));
+  try {
+    mkdirSync(join(dir, ".git"));
+    writeFileSync(join(dir, ".git", "config"), "x");
+    // The premise of the protection: the OS really treats these spellings as the same directory.
+    assert.equal(existsSync(join(dir, ".git.", "config")), true, "trailing dot resolves to .git");
+    assert.equal(existsSync(join(dir, ".GIT", "config")), true, "case-insensitive");
+    assert.equal(isProtectedPath(".git./config"), true);
+    assert.equal(isProtectedPath(".GIT/config"), true);
+    // 8.3 short name, if this volume generates them (it can be disabled per volume).
+    const listing = execFileSync("cmd.exe", ["/d", "/c", "dir", "/x", "/a:d", dir], {
+      encoding: "utf8",
+    });
+    const short = /^\S+\s+\S+\s+<DIR>\s+(\S+~\d+)\s+\.git\s*$/im.exec(listing)?.[1];
+    if (short) {
+      assert.equal(
+        existsSync(join(dir, short, "config")),
+        true,
+        `short name ${short} resolves to .git`,
+      );
+      assert.equal(isProtectedPath(`${short}/config`), true, `short name ${short} is protected`);
+    } else {
+      console.log("8.3 short names are not generated on this volume; that part was not exercised");
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
