@@ -77,6 +77,10 @@ export function errorDetail(stderr: string): string {
       lines[lines.length - 1] ??
       first;
   }
+  // Some tools (osv-scanner) log progress first and the failure later. If the first line does not name a
+  // problem, prefer the first line that does; otherwise keep the first line.
+  const names = /\b(error|failed|failure|could not|cannot|unable|invalid|unexpected|not found)\b/i;
+  if (pick === first && !names.test(first)) pick = lines.find((l) => names.test(l)) ?? first;
   return scrubPaths(pick).slice(0, 300);
 }
 

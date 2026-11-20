@@ -71,7 +71,7 @@ npm install -g code-intelligence
 Or from a GitHub release (the same prebuilt tarball, no build step):
 
 ```bash
-npm install -g https://github.com/micio86dev/code-intelligence/releases/download/v0.1.2/code-intelligence-0.1.2.tgz
+npm install -g https://github.com/micio86dev/code-intelligence/releases/download/v0.1.3/code-intelligence-0.1.3.tgz
 ```
 
 Or straight from the repository (builds on install; this can fail if your npm config sets `allow-scripts`, see [troubleshooting](docs/troubleshooting.md)):
@@ -97,33 +97,34 @@ Nothing is installed automatically.
 
 Plant three fake defects in a throwaway repository and see what a scan reports. Every command below was run as written against the published package.
 
+Each block starts from its own `cd` and is one `&&` chain, so nothing runs if a step fails and nothing can touch another folder, even if you paste it into a terminal that is somewhere else. Step 1 deletes and recreates `/tmp/code-intel-demo`, so it is safe to repeat.
+
 **1. Create a throwaway project** with a lockfile pinning lodash 4.17.15, committed as the baseline. `--no-verify` skips any global pre-commit hook of yours, which is unrelated to this tool.
 
 ```bash
-mkdir /tmp/code-intel-demo && cd /tmp/code-intel-demo && git init -q .
-cat > package.json <<'JSON'
-{"name":"demo","version":"1.0.0","dependencies":{"lodash":"4.17.15"}}
-JSON
-cat > package-lock.json <<'JSON'
-{"name":"demo","version":"1.0.0","lockfileVersion":3,"requires":true,
- "packages":{"":{"name":"demo","version":"1.0.0","dependencies":{"lodash":"4.17.15"}},
- "node_modules/lodash":{"version":"4.17.15","resolved":"https://registry.npmjs.org/lodash/-/lodash-4.17.15.tgz"}}}
-JSON
-git add -A && git commit -q --no-verify -m base
+rm -rf /tmp/code-intel-demo &&
+mkdir /tmp/code-intel-demo &&
+cd /tmp/code-intel-demo &&
+git init -q . &&
+echo '{"name":"demo","version":"1.0.0","dependencies":{"lodash":"4.17.15"}}' > package.json &&
+echo '{"name":"demo","version":"1.0.0","lockfileVersion":3,"requires":true,"packages":{"":{"name":"demo","version":"1.0.0","dependencies":{"lodash":"4.17.15"}},"node_modules/lodash":{"version":"4.17.15","resolved":"https://registry.npmjs.org/lodash/-/lodash-4.17.15.tgz"}}}' > package-lock.json &&
+git add -A &&
+git commit -q --no-verify -m base
 ```
 
 **2. Plant the defects**: a fake AWS-shaped key assembled at run time, an `eval`, and a touched lockfile.
 
 ```bash
-KEY="AKIA$(printf 'QYLPMN5HHHFPZAM2')"
-printf 'const key = "%s";\nconst result = eval(req.query.expr);\n' "$KEY" > app.js
+cd /tmp/code-intel-demo &&
+KEY="AKIA$(printf 'QYLPMN5HHHFPZAM2')" &&
+printf 'const key = "%s";\nconst result = eval(req.query.expr);\n' "$KEY" > app.js &&
 echo "" >> package-lock.json
 ```
 
 **3. Scan.**
 
 ```bash
-code-intel scan; echo "exit code: $?"
+cd /tmp/code-intel-demo && code-intel scan; echo "exit code: $?"
 ```
 
 Expected (versions and advisory ids change over time): gitleaks, semgrep and osv-scanner report findings, the key appears **once** as `[gitleaks +semgrep]` (its value is never printed), lodash's advisories appear on `package-lock.json`, the `eval` appears as a medium finding, and the result is `FAIL (exit 1)`.

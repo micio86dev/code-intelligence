@@ -4,6 +4,13 @@ All notable changes to this project are documented here. Format based on [Keep a
 
 ## [Unreleased]
 
+## [0.1.3]
+
+### Fixed
+
+- Error messages: when an engine writes progress lines before its failure (osv-scanner does), the message now shows the line that names the failure instead of the first line. An unparseable lockfile used to be reported as `exited with code 127 (Starting filesystem walk for root: /)`; it now says `could not extract: unexpected end of JSON input`.
+- Documentation: the first-test blocks are `&&` chains that start from their own `cd`, so pasting one in the wrong folder runs nothing, and step 1 can be repeated. Previously a step pasted inside a real repository could commit or overwrite files there.
+
 ## [0.1.2]
 
 ### Fixed

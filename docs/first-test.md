@@ -16,17 +16,17 @@ code-intel doctor
 
 ## 2. Create a throwaway project
 
+Each block starts from its own `cd` and is one `&&` chain, so nothing runs if a step fails and nothing can touch another folder, even if you paste it into a terminal that is somewhere else. Step 1 deletes and recreates `/tmp/code-intel-demo`, so it is safe to repeat.
+
 ```bash
-mkdir /tmp/code-intel-demo && cd /tmp/code-intel-demo && git init -q .
-cat > package.json <<'JSON'
-{"name":"demo","version":"1.0.0","dependencies":{"lodash":"4.17.15"}}
-JSON
-cat > package-lock.json <<'JSON'
-{"name":"demo","version":"1.0.0","lockfileVersion":3,"requires":true,
- "packages":{"":{"name":"demo","version":"1.0.0","dependencies":{"lodash":"4.17.15"}},
- "node_modules/lodash":{"version":"4.17.15","resolved":"https://registry.npmjs.org/lodash/-/lodash-4.17.15.tgz"}}}
-JSON
-git add -A && git commit -q --no-verify -m base
+rm -rf /tmp/code-intel-demo &&
+mkdir /tmp/code-intel-demo &&
+cd /tmp/code-intel-demo &&
+git init -q . &&
+echo '{"name":"demo","version":"1.0.0","dependencies":{"lodash":"4.17.15"}}' > package.json &&
+echo '{"name":"demo","version":"1.0.0","lockfileVersion":3,"requires":true,"packages":{"":{"name":"demo","version":"1.0.0","dependencies":{"lodash":"4.17.15"}},"node_modules/lodash":{"version":"4.17.15","resolved":"https://registry.npmjs.org/lodash/-/lodash-4.17.15.tgz"}}}' > package-lock.json &&
+git add -A &&
+git commit -q --no-verify -m base
 ```
 
 `--no-verify` skips any global pre-commit hook you may have installed, which is unrelated to this tool and would block the demo commit.
@@ -34,8 +34,9 @@ git add -A && git commit -q --no-verify -m base
 ## 3. Plant the defects
 
 ```bash
-KEY="AKIA$(printf 'QYLPMN5HHHFPZAM2')"
-printf 'const key = "%s";\nconst result = eval(req.query.expr);\n' "$KEY" > app.js
+cd /tmp/code-intel-demo &&
+KEY="AKIA$(printf 'QYLPMN5HHHFPZAM2')" &&
+printf 'const key = "%s";\nconst result = eval(req.query.expr);\n' "$KEY" > app.js &&
 echo "" >> package-lock.json
 ```
 
@@ -50,8 +51,7 @@ Two details that matter:
 ## 4. Scan
 
 ```bash
-code-intel scan
-echo "exit code: $?"
+cd /tmp/code-intel-demo && code-intel scan; echo "exit code: $?"
 ```
 
 Expected (versions and advisory ids will differ over time):

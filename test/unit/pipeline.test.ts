@@ -294,6 +294,25 @@ test("error details skip runtime boilerplate headers (node and python) and repor
   assert.equal(errorDetail("node:internal/x:1\nno exception line\nlast words"), "last words");
 });
 
+test("error details prefer the line that names the failure over an informational first line (osv-scanner)", async () => {
+  const { errorDetail } = await import("../../src/engines/util.ts");
+  // Real osv-scanner stderr for an unparseable package-lock.json: the first lines are progress logs.
+  const osv = [
+    "Scanning dir .",
+    "Starting filesystem walk for root: /",
+    "End status: 1 dirs visited, 3 inodes visited, 1 Extract calls, 144.916µs elapsed, 144µs wall time",
+    "Error during extraction: (extracting as javascript/packagelockjson) work/package-lock.json: could not extract: unexpected end of JSON input",
+    "No package sources found, --help for usage information.",
+  ].join("\n");
+  const d = errorDetail(osv);
+  assert.match(d, /could not extract: unexpected end of JSON input/);
+  assert.equal(d.includes("filesystem walk"), false);
+  // Unchanged behavior: a first line that already names the problem stays the message, and without any
+  // error-looking line the first line is still used.
+  assert.equal(errorDetail("boom: bad config\nsecond line"), "boom: bad config");
+  assert.equal(errorDetail("Scanning dir .\nall quiet"), "Scanning dir .");
+});
+
 test("planning only locates binaries: versions are read concurrently with the engine run, not before it", async () => {
   const detectCalls: Array<{ withVersion?: boolean } | undefined> = [];
   const slowVersion = fake("slowv", "secrets", {
