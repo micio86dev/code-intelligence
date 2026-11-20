@@ -103,11 +103,11 @@ test("protected paths: Windows aliases of .git and of the config file are protec
   }
 });
 
-test("Windows aliases of .git resolve to the real directory on a real volume, and are protected", {
+test("every spelling the OS really resolves to .git on a real Windows volume is protected", {
   skip: process.platform !== "win32",
 }, async () => {
   const { execFileSync } = await import("node:child_process");
-  const { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } = await import("node:fs");
+  const { mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } = await import("node:fs");
   const { tmpdir } = await import("node:os");
   const { join } = await import("node:path");
   const { isProtectedPath } = await import("../../src/core/config.ts");
@@ -115,26 +115,49 @@ test("Windows aliases of .git resolve to the real directory on a real volume, an
   try {
     mkdirSync(join(dir, ".git"));
     writeFileSync(join(dir, ".git", "config"), "x");
-    // The premise of the protection: the OS really treats these spellings as the same directory.
-    assert.equal(existsSync(join(dir, ".git.", "config")), true, "trailing dot resolves to .git");
-    assert.equal(existsSync(join(dir, ".GIT", "config")), true, "case-insensitive");
-    assert.equal(isProtectedPath(".git./config"), true);
-    assert.equal(isProtectedPath(".GIT/config"), true);
-    // 8.3 short name, if this volume generates them (it can be disabled per volume).
+    const realConfig = statSync(join(dir, ".git", "config"));
+    const realDir = statSync(join(dir, ".git"));
+    // 8.3 short name of .git, if this volume generates them (it can be disabled per volume).
     const listing = execFileSync("cmd.exe", ["/d", "/c", "dir", "/x", "/a:d", dir], {
       encoding: "utf8",
     });
-    const short = /^\S+\s+\S+\s+<DIR>\s+(\S+~\d+)\s+\.git\s*$/im.exec(listing)?.[1];
-    if (short) {
-      assert.equal(
-        existsSync(join(dir, short, "config")),
-        true,
-        `short name ${short} resolves to .git`,
-      );
-      assert.equal(isProtectedPath(`${short}/config`), true, `short name ${short} is protected`);
-    } else {
-      console.log("8.3 short names are not generated on this volume; that part was not exercised");
+    const short = /<DIR>\s+(\S+~\d+)\s+\.git\s*$/im.exec(listing)?.[1];
+    const same = (a: ReturnType<typeof statSync>, b: ReturnType<typeof statSync>) =>
+      a.ino === b.ino && a.dev === b.dev;
+    const dirSpellings = [
+      ".git",
+      ".GIT",
+      ".git.",
+      ".git ",
+      ".git::$INDEX_ALLOCATION",
+      ...(short ? [short] : []),
+    ];
+    const resolved: string[] = [];
+    for (const sp of dirSpellings) {
+      for (const [rel, real] of [
+        [sp, realDir],
+        [`${sp}/config`, realConfig],
+      ] as const) {
+        let st: ReturnType<typeof statSync> | undefined;
+        try {
+          st = statSync(join(dir, rel));
+        } catch {
+          st = undefined;
+        }
+        if (st && same(st, real)) {
+          resolved.push(rel);
+          assert.equal(isProtectedPath(rel), true, `${rel} resolves to .git and must be protected`);
+        }
+      }
     }
+    // Evidence for the docs: which spellings this volume really treats as .git.
+    console.log(
+      `resolved to .git on this volume: ${JSON.stringify(resolved)}; 8.3 short name: ${short ?? "none generated"}`,
+    );
+    assert.ok(
+      resolved.includes(".git") && resolved.includes(".GIT"),
+      "the real name and its case variant must resolve",
+    );
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
