@@ -6,9 +6,11 @@ This walkthrough installs `code-intel`, plants three fake defects in a throwaway
 
 ```bash
 npm install -g code-intelligence
-brew install gitleaks semgrep osv-scanner      # or see `code-intel doctor` for your OS
+brew install gitleaks semgrep osv-scanner
 code-intel doctor
 ```
+
+- `brew install gitleaks semgrep osv-scanner`: or see `code-intel doctor` for your OS
 
 `doctor` must show `[ok]` for gitleaks, semgrep and osv-scanner. If one is missing it prints the exact install command. A missing engine is never skipped silently: a scan that needs it ends with exit code 3 (incomplete), not 0.
 
@@ -32,10 +34,13 @@ git add -A && git commit -q --no-verify -m base
 ## 3. Plant the defects
 
 ```bash
-KEY="AKIA$(printf 'QYLPMN5HHHFPZAM2')"          # a fake AWS-shaped key, assembled at run time
+KEY="AKIA$(printf 'QYLPMN5HHHFPZAM2')"
 printf 'const key = "%s";\nconst result = eval(req.query.expr);\n' "$KEY" > app.js
-echo "" >> package-lock.json                     # touch the lockfile so dependencies are in scope
+echo "" >> package-lock.json
 ```
+
+- `KEY="AKIA$(printf 'QYLPMN5HHHFPZAM2')"`: a fake AWS-shaped key, assembled at run time
+- `echo "" >> package-lock.json`: touch the lockfile so dependencies are in scope
 
 Two details that matter:
 
@@ -74,20 +79,28 @@ Things to notice:
 ## 5. Other views
 
 ```bash
-code-intel scan --format json          # stable schema for agents and CI
-code-intel scan --format sarif         # for GitHub code scanning
-code-intel scan --staged               # only what is staged (pre-commit)
-code-intel scan --engines secrets      # one category only
-code-intel doctor --json               # machine-readable engine status
+code-intel scan --format json
+code-intel scan --format sarif
+code-intel scan --staged
+code-intel scan --engines secrets
+code-intel doctor --json
 ```
+
+- `code-intel scan --format json`: stable schema for agents and CI
+- `code-intel scan --format sarif`: for GitHub code scanning
+- `code-intel scan --staged`: only what is staged (pre-commit)
+- `code-intel scan --engines secrets`: one category only
+- `code-intel doctor --json`: machine-readable engine status
 
 Optional, slower, JavaScript/TypeScript only: `code-intel impact` (which tests a change affects) and `code-intel mutate` (would your tests notice a behavior change). See the [CLI reference](cli.md).
 
 ## 6. Use it from your agent
 
 ```bash
-npx code-intelligence-skills install --agent claude     # or codex, opencode, pi, gentle-shell
+npx code-intelligence-skills install --agent claude
 ```
+
+- `npx code-intelligence-skills install --agent claude`: or codex, opencode, pi, gentle-shell
 
 Then ask your agent, explicitly: _"Use the code-intelligence skill to check my changes."_ Vague requests such as "is this safe?" may be answered with the agent's own built-in tools instead; see the compatibility notes in [code-intelligence-skills](https://github.com/micio86dev/code-intelligence-skills/tree/main/docs/integrations).
 

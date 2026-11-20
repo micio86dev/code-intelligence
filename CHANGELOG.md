@@ -4,6 +4,12 @@ All notable changes to this project are documented here. Format based on [Keep a
 
 ## [Unreleased]
 
+## [0.1.2]
+
+### Fixed
+
+- Documentation: shell code blocks no longer carry `# comments`. In zsh (the macOS default shell) an interactive `#` is not a comment, so a pasted line such as `git commit -q -m base   # note` passed the note's words to the command as arguments. Comments now sit in a list below each block, and the first-test guide is split into step-wise blocks. The blocks were run in interactive zsh without errors.
+
 ## [0.1.1]
 
 ### Changed

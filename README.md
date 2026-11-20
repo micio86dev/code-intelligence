@@ -62,14 +62,21 @@ Likewise it does not duplicate [CodeGraph](https://github.com/colbymchenry/codeg
 
 Requires Node.js 22 or newer.
 
+From the npm registry:
+
 ```bash
-# From the npm registry:
 npm install -g code-intelligence
+```
 
-# Or from a GitHub release (the same prebuilt tarball, no build step):
-npm install -g https://github.com/micio86dev/code-intelligence/releases/download/v0.1.0/code-intelligence-0.1.0.tgz
+Or from a GitHub release (the same prebuilt tarball, no build step):
 
-# Or straight from the repository (builds on install):
+```bash
+npm install -g https://github.com/micio86dev/code-intelligence/releases/download/v0.1.2/code-intelligence-0.1.2.tgz
+```
+
+Or straight from the repository (builds on install; this can fail if your npm config sets `allow-scripts`, see [troubleshooting](docs/troubleshooting.md)):
+
+```bash
 npm install -g github:micio86dev/code-intelligence
 ```
 
@@ -78,9 +85,11 @@ npm install -g github:micio86dev/code-intelligence
 Then install the engines you want. `code-intel doctor` prints what is present and the exact command for what is missing:
 
 ```bash
-brew install gitleaks semgrep osv-scanner ast-grep     # macOS / Linuxbrew
+brew install gitleaks semgrep osv-scanner ast-grep
 code-intel doctor
 ```
+
+- `brew install gitleaks semgrep osv-scanner ast-grep`: macOS / Linuxbrew
 
 Nothing is installed automatically.
 
@@ -88,8 +97,9 @@ Nothing is installed automatically.
 
 Plant three fake defects in a throwaway repository and see what a scan reports. Every command below was run as written against the published package.
 
+**1. Create a throwaway project** with a lockfile pinning lodash 4.17.15, committed as the baseline. `--no-verify` skips any global pre-commit hook of yours, which is unrelated to this tool.
+
 ```bash
-# 1. a throwaway project: a lockfile pinning lodash 4.17.15, committed as the baseline
 mkdir /tmp/code-intel-demo && cd /tmp/code-intel-demo && git init -q .
 cat > package.json <<'JSON'
 {"name":"demo","version":"1.0.0","dependencies":{"lodash":"4.17.15"}}
@@ -99,14 +109,20 @@ cat > package-lock.json <<'JSON'
  "packages":{"":{"name":"demo","version":"1.0.0","dependencies":{"lodash":"4.17.15"}},
  "node_modules/lodash":{"version":"4.17.15","resolved":"https://registry.npmjs.org/lodash/-/lodash-4.17.15.tgz"}}}
 JSON
-git add -A && git commit -q --no-verify -m base   # --no-verify skips any global pre-commit hook of yours
+git add -A && git commit -q --no-verify -m base
+```
 
-# 2. plant the defects (a fake AWS-shaped key assembled at run time, an eval, a touched lockfile)
+**2. Plant the defects**: a fake AWS-shaped key assembled at run time, an `eval`, and a touched lockfile.
+
+```bash
 KEY="AKIA$(printf 'QYLPMN5HHHFPZAM2')"
 printf 'const key = "%s";\nconst result = eval(req.query.expr);\n' "$KEY" > app.js
 echo "" >> package-lock.json
+```
 
-# 3. scan
+**3. Scan.**
+
+```bash
 code-intel scan; echo "exit code: $?"
 ```
 
@@ -118,21 +134,34 @@ Two details that matter: do **not** use AWS's documented example key (`AKIAIOSFO
 
 ```bash
 cd your-repo
-code-intel doctor                    # which engines are available?
-code-intel scan                      # changed files, quick profile
-code-intel scan --staged             # only what is staged (pre-commit)
-code-intel scan --since main         # everything on this branch
-code-intel scan --all -p deep        # whole repo, adds architecture rules
-code-intel scan --format json        # for agents and CI
-code-intel scan --format sarif > results.sarif   # GitHub code scanning
+code-intel doctor
+code-intel scan
+code-intel scan --staged
+code-intel scan --since main
+code-intel scan --all -p deep
+code-intel scan --format json
+code-intel scan --format sarif > results.sarif
 
-code-intel impact                    # which tests does my change affect?
-code-intel mutate                    # are my tests strong enough? (slow, JS/TS)
+code-intel impact
+code-intel mutate
 
-code-intel init                      # optional: write .code-intel.json
-code-intel baseline                  # accept today's findings...
-code-intel scan --new-only           # ...and only fail on new ones
+code-intel init
+code-intel baseline
+code-intel scan --new-only
 ```
+
+- `code-intel doctor`: which engines are available?
+- `code-intel scan`: changed files, quick profile
+- `code-intel scan --staged`: only what is staged (pre-commit)
+- `code-intel scan --since main`: everything on this branch
+- `code-intel scan --all -p deep`: whole repo, adds architecture rules
+- `code-intel scan --format json`: for agents and CI
+- `code-intel scan --format sarif > results.sarif`: GitHub code scanning
+- `code-intel impact`: which tests does my change affect?
+- `code-intel mutate`: are my tests strong enough? (slow, JS/TS)
+- `code-intel init`: optional: write .code-intel.json
+- `code-intel baseline`: accept today's findings...
+- `code-intel scan --new-only`: ...and only fail on new ones
 
 ### Exit codes
 
@@ -173,9 +202,12 @@ The CLI is the same everywhere; only the one-time wiring differs. [code-intellig
 
 ```bash
 npm uninstall -g code-intelligence
-rm -rf .code-intel .code-intel.json     # per-project config and baseline (optional)
-rm -rf "$(code-intel doctor --json | jq -r .cacheDir | sed "s#^~#$HOME#")"   # this repository's result cache (optional)
+rm -rf .code-intel .code-intel.json
+rm -rf "$(code-intel doctor --json | jq -r .cacheDir | sed "s#^~#$HOME#")"
 ```
+
+- `rm -rf .code-intel .code-intel.json`: per-project config and baseline (optional)
+- `rm -rf "$(code-intel doctor --json | jq -r .cacheDir | sed "s#^~#$HOME#")"`: this repository's result cache (optional)
 
 It writes only your optional `.code-intel.json` and `.code-intel/baseline.json` (if you run `init` / `baseline`) inside a repository, a result cache in your user cache directory (`code-intel doctor` prints the path; safe to delete), and temporary directories that are removed after each run.
 

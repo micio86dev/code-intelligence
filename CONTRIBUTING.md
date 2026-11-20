@@ -18,12 +18,17 @@ To run the integration tests you need the engines: `brew install gitleaks semgre
 
 ```bash
 npm run lint && npm run typecheck
-npm test                # unit, fast, no engines needed
-npm run test:e2e        # real CLI against real engines
-npm run test:integration  # StrykerJS (installs it into a temp project)
-npm run test:install    # pack, install into a clean prefix, uninstall
+npm test
+npm run test:e2e
+npm run test:integration
+npm run test:install
 npm run test:all
 ```
+
+- `npm test`: unit, fast, no engines needed
+- `npm run test:e2e`: real CLI against real engines
+- `npm run test:integration`: StrykerJS (installs it into a temp project)
+- `npm run test:install`: pack, install into a clean prefix, uninstall
 
 CI runs the unit tests on Linux, macOS and Windows (Node 22 and 24), the engine-backed tests (e2e, integration, install) on Linux where all engines are installed, and scans this repository with itself. **Findings from `code-intel scan --all` on this repo must be fixed or justified inline** (a `nosemgrep` comment with the reason).
 
@@ -43,8 +48,10 @@ CI runs the unit tests on Linux, macOS and Windows (Node 22 and 24), the engine-
 
 ```bash
 npm install --no-save @stryker-mutator/core@10.1.1
-npm run build && node dist/cli.js mutate src/core/glob.ts      # about 5 minutes
+npm run build && node dist/cli.js mutate src/core/glob.ts
 ```
+
+- `npm run build && node dist/cli.js mutate src/core/glob.ts`: about 5 minutes
 
 `stryker.config.json` runs the unit tests and sets `tsconfigFile` to a non-existent file because this project uses TypeScript 7 (see docs/troubleshooting.md). The recorded results are in `bench/results/mutation-self.json`. A surviving mutant is a missing test: add one for it and re-run.
 
