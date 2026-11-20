@@ -12,7 +12,7 @@ import { dirname, join } from "node:path";
 import type { Config } from "../core/config.ts";
 import { exec } from "../core/exec.ts";
 import { hashPaths } from "../core/hashing.ts";
-import { isSymlink } from "../core/safefs.ts";
+import { isPlainFileInside } from "../core/safefs.ts";
 import type { RawFinding } from "../types.ts";
 import { type Engine, type EngineOutput, isLockfile, type RunContext } from "./engine.ts";
 import { detectBinary, parseJson, processFailure, toRel } from "./util.ts";
@@ -77,11 +77,20 @@ export const gitleaks: Engine = {
     hashPaths(root, [c.engines.gitleaks.configPath ?? ".gitleaks.toml", ".gitleaksignore"]),
   ],
   async run(ctx: RunContext): Promise<EngineOutput> {
-    const { dir, skippedLarge } = stage(ctx.root, ctx.files);
+    // gitleaks auto-discovers <scanned dir>/.gitleaks.toml, so with --ignore-repo-config the repository's own
+    // gitleaks files must not be staged into the directory it scans.
+    const files = ctx.config.repoConfigIgnored
+      ? ctx.files.filter((f) => f !== ".gitleaks.toml" && f !== ".gitleaksignore")
+      : ctx.files;
+    if (files.length === 0) return { findings: [], warnings: [] };
+    const { dir, skippedLarge } = stage(ctx.root, files);
     try {
+      // Scan "." with the staging directory as the working directory: gitleaks then reports repo-relative
+      // paths and fingerprints (creds.txt:rule:line), exactly like a manual run, so a user's own
+      // .gitleaksignore entries match.
       const args = [
         "dir",
-        dir,
+        ".",
         "--no-banner",
         "--no-color",
         "--redact",
@@ -95,17 +104,22 @@ export const gitleaks: Engine = {
         "5",
       ];
       const repoWarnings: string[] = [];
-      if (!ctx.config.repoConfigIgnored) {
+      if (ctx.config.repoConfigIgnored) {
+        // By default gitleaks reads .gitleaksignore from its working directory (the repository root).
+        // Point it at the staging directory, which cannot contain one.
+        args.push("--gitleaks-ignore-path", dir);
+      } else {
         const cfgPath = ctx.config.engines.gitleaks.configPath;
-        const cfg = cfgPath ? join(ctx.root, cfgPath) : join(ctx.root, ".gitleaks.toml");
-        if (existsSync(cfg) && !isSymlink(cfg)) {
+        const cfgRel = cfgPath ?? ".gitleaks.toml";
+        const cfg = join(ctx.root, cfgRel);
+        if (isPlainFileInside(ctx.root, cfgRel)) {
           args.push("--config", cfg);
           repoWarnings.push(
             "using the repository's gitleaks configuration, which can allowlist paths or rules (--ignore-repo-config disables it)",
           );
         } else if (cfgPath) throw new Error(`gitleaks config not found: ${cfgPath}`);
         const ignore = join(ctx.root, ".gitleaksignore");
-        if (existsSync(ignore) && !isSymlink(ignore)) {
+        if (isPlainFileInside(ctx.root, ".gitleaksignore")) {
           args.push("--gitleaks-ignore-path", ignore);
           repoWarnings.push(
             "honoring the repository's .gitleaksignore (--ignore-repo-config disables it)",
@@ -113,7 +127,7 @@ export const gitleaks: Engine = {
         }
       }
 
-      const r = await exec(ctx.binary, args, { cwd: ctx.root, timeoutMs: ctx.timeoutMs });
+      const r = await exec(ctx.binary, args, { cwd: dir, timeoutMs: ctx.timeoutMs });
       const fail = processFailure("gitleaks", r, [0]);
       if (fail) throw fail;
       const leaks = r.stdout.trim() ? parseJson<GitleaksLeak[] | null>("gitleaks", r.stdout) : [];

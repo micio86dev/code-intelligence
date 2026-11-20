@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Finding } from "../types.ts";
 import { UsageError } from "./errors.ts";
-import { isSymlink, safeWrite, UnsafePathError } from "./safefs.ts";
+import { assertPlainPath, safeWrite, UnsafePathError } from "./safefs.ts";
 
 interface BaselineFile {
   schemaVersion: 1;
@@ -12,15 +12,22 @@ interface BaselineFile {
 
 export function loadBaseline(root: string, path: string): Set<string> | null {
   const abs = join(root, path);
-  if (isSymlink(abs)) throw new UsageError(`Refusing to read baseline ${path}: it is a symlink`);
+  try {
+    assertPlainPath(root, path); // no symlink anywhere in the path, not only at the end
+  } catch (e) {
+    if (e instanceof UnsafePathError)
+      throw new UsageError(`Refusing to read baseline ${path}: ${e.message}`);
+    throw e;
+  }
   if (!existsSync(abs)) return null;
   try {
     const parsed = JSON.parse(readFileSync(abs, "utf8")) as BaselineFile;
     if (parsed.schemaVersion !== 1 || !Array.isArray(parsed.entries))
       throw new Error("unsupported schema");
     return new Set(parsed.entries.map((e) => e.fingerprint));
-  } catch (e) {
-    throw new UsageError(`Cannot read baseline ${path}`, [(e as Error).message]);
+  } catch {
+    // Never echo the parser's message: it quotes the file's text.
+    throw new UsageError(`Cannot read baseline ${path}`, ["not a valid code-intel baseline file"]);
   }
 }
 

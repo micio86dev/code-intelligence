@@ -257,3 +257,23 @@ test("a category with no engine is an explicit skip, never a crash or a silent p
   assert.match(arch?.reason ?? "", /no engine implemented/);
   assert.equal(report.exitCode, 0);
 });
+
+test("engine error details: python tracebacks report the exception, and absolute paths are scrubbed", async () => {
+  const { errorDetail, scrubPaths } = await import("../../src/engines/util.ts");
+  const tb = [
+    "Traceback (most recent call last):",
+    '  File "/Users/someone/.local/lib/python3.12/site-packages/semgrep/cli.py", line 10, in main',
+    "PermissionError: [Errno 1] Operation not permitted: '/Users/someone/.semgrep/settings.yml'",
+  ].join("\n");
+  const d = errorDetail(tb);
+  assert.match(d, /PermissionError: \[Errno 1\] Operation not permitted/);
+  assert.equal(d.includes("someone"), false);
+  assert.equal(d.includes("/Users"), false);
+  assert.equal(errorDetail("boom: bad config\nsecond line"), "boom: bad config");
+  assert.equal(errorDetail(""), "no error output");
+  assert.equal(scrubPaths("open C:\\Users\\bob\\x\\y.txt failed"), "open <path> failed");
+  assert.equal(
+    scrubPaths("rules at /etc/semgrep/rules.yml and ./relative"),
+    "rules at <path> and ./relative",
+  );
+});

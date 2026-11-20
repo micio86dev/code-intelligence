@@ -117,3 +117,23 @@ test("a large file list with the default-style excludes is matched quickly", () 
   assert.equal(hits, 0);
   assert.ok(performance.now() - t0 < 3000, `took ${performance.now() - t0}ms`);
 });
+
+test("verifier repro: a thousand cheap-looking patterns cannot make a scan slow (count and work are bounded)", async () => {
+  const { validateConfig } = await import("../../src/core/config.ts");
+  const bomb = Array.from(
+    { length: 1000 },
+    (_, i) => `{a,b}{c,d}{e,f}{g,h}{i,j}${i}*a*a*a*a*a*a*b`,
+  );
+  const issues = validateConfig({ exclude: bomb }).issues;
+  assert.ok(issues.some((i) => i.path === "exclude" && /at most 100 entries/.test(i.message)));
+  assert.ok(issues.some((i) => i.path === "exclude" && /at most 64 alternatives/.test(i.message)));
+  assert.equal(validateConfig({ exclude: ["generated/**", "**/*.snap"] }).issues.length, 0);
+  // Even if validation were bypassed, the matcher aborts instead of running for minutes.
+  const m = compileGlobs(bomb);
+  const paths = Array.from({ length: 2000 }, (_, i) => `${"d".repeat(90)}${i}.js`);
+  const t0 = performance.now();
+  assert.throws(() => {
+    for (const p of paths) m(p);
+  }, /too expensive/);
+  assert.ok(performance.now() - t0 < 10_000, `aborted after ${performance.now() - t0}ms`);
+});

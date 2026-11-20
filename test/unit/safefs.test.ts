@@ -4,11 +4,11 @@ import { join } from "node:path";
 import { after, test } from "node:test";
 import { runInit } from "../../src/commands/init.ts";
 import { applyBaseline, loadBaseline, saveBaseline } from "../../src/core/baseline.ts";
-import { isCacheEntry, ResultCache } from "../../src/core/cache.ts";
+import { defaultCacheDir, isCacheEntry, ResultCache } from "../../src/core/cache.ts";
 import { loadConfig, validateConfig } from "../../src/core/config.ts";
 import { UsageError } from "../../src/core/errors.ts";
 import { safeWrite, UnsafePathError } from "../../src/core/safefs.ts";
-import { makeProject } from "../helpers.ts";
+import { makeProject, TEST_CACHE_DIR } from "../helpers.ts";
 
 const projects: Array<{ cleanup(): void }> = [];
 after(() => {
@@ -39,28 +39,38 @@ test(
   },
 );
 
-test(
-  "a committed symlink in .code-intel/cache cannot make a scan truncate a file elsewhere (verifier repro a)",
-  skipWin,
-  () => {
-    const victim = mk({ "precious.txt": "victim data" });
-    const p = mk();
-    mkdirSync(join(p.dir, ".code-intel/cache"), { recursive: true });
-    symlinkSync(join(victim.dir, "precious.txt"), join(p.dir, ".code-intel/cache/.gitignore"));
-    const cache = new ResultCache(p.dir, true);
-    cache.put("abc", { findings: [], warnings: [] }); // must not throw and must not write through the link
-    assert.equal(readFileSync(join(victim.dir, "precious.txt"), "utf8"), "victim data");
-    assert.equal(
-      readFileSync(join(p.dir, ".code-intel/cache/abc.json"), "utf8"),
-      '{"findings":[],"warnings":[]}',
-    );
-    // a symlinked .code-intel directory disables caching instead of writing outside
-    const p2 = mk();
-    symlinkSync(victim.dir, join(p2.dir, ".code-intel"));
-    new ResultCache(p2.dir, true).put("abc", { findings: [], warnings: [] });
-    assert.equal(existsSync(join(victim.dir, "cache")), false);
-  },
-);
+test("the repository's .code-intel/cache is never read or written: a planted entry is ignored (verifier recheck F)", () => {
+  const p = mk({ "a.js": "x\n" });
+  const key = ResultCache.key("e", "id", [], p.dir, ["a.js"]);
+  // A hostile repository commits a well-formed "no findings" entry at exactly the right key.
+  mkdirSync(join(p.dir, ".code-intel/cache"), { recursive: true });
+  writeFileSync(join(p.dir, ".code-intel/cache", `${key}.json`), '{"findings":[],"warnings":[]}');
+  const cache = new ResultCache(p.dir, true);
+  assert.equal(cache.get(key), null, "the in-repo entry must not be served");
+  cache.put(key, { findings: [], warnings: ["real"] });
+  assert.deepEqual(cache.get(key)?.warnings, ["real"], "entries live in the user cache directory");
+  assert.equal(
+    readFileSync(join(p.dir, ".code-intel/cache", `${key}.json`), "utf8"),
+    '{"findings":[],"warnings":[]}',
+    "the repository was not touched",
+  );
+  assert.ok(cache.dir.startsWith(TEST_CACHE_DIR), "tests are isolated from the real cache");
+  assert.ok(!cache.dir.startsWith(p.dir), "never inside the repository");
+});
+
+test("the cache location follows CODE_INTEL_CACHE_DIR, and different repositories never share a directory", () => {
+  const a = mk();
+  const b = mk();
+  assert.notEqual(defaultCacheDir(a.dir), defaultCacheDir(b.dir));
+  assert.ok(defaultCacheDir(a.dir).startsWith(TEST_CACHE_DIR));
+});
+
+test("a cache write failure never fails anything", () => {
+  const p = mk();
+  const blocker = join(p.dir, "not-a-dir");
+  writeFileSync(blocker, "file");
+  new ResultCache(p.dir, true, join(blocker, "cache")).put("k", { findings: [], warnings: [] }); // parent is a file
+});
 
 test("baseline writes refuse symlinks and .git targets (verifier repro b, c)", skipWin, () => {
   const victim = mk();
@@ -95,11 +105,9 @@ test("init never writes through a dangling symlink (verifier repro d)", skipWin,
   await assert.rejects(runInit(p.dir), UsageError);
   assert.equal(existsSync(target), false);
   const q = mk();
-  mkdirSync(join(q.dir, ".code-intel"));
-  symlinkSync(join(victim.dir, "gi.txt"), join(q.dir, ".code-intel/.gitignore"));
   const r = await runInit(q.dir);
-  assert.deepEqual(r.created, [".code-intel.json"], "the dangling .gitignore link is left alone");
-  assert.equal(existsSync(join(victim.dir, "gi.txt")), false);
+  assert.deepEqual(r.created, [".code-intel.json"]);
+  assert.equal(existsSync(join(q.dir, ".code-intel")), false, "init creates nothing else");
 });
 
 test(
@@ -160,13 +168,10 @@ test("cache entries are validated: a forged 'no findings' entry shape or junk is
   );
   const p = mk({ "a.js": "x\n" });
   const key = ResultCache.key("e", "id", [], p.dir, ["a.js"]);
-  mkdirSync(join(p.dir, ".code-intel/cache"), { recursive: true });
-  writeFileSync(join(p.dir, ".code-intel/cache", `${key}.json`), '{"warnings":[]}');
-  assert.equal(
-    new ResultCache(p.dir, true).get(key),
-    null,
-    "malformed entry is a miss, not a crash",
-  );
+  const cache = new ResultCache(p.dir, true);
+  mkdirSync(cache.dir, { recursive: true });
+  writeFileSync(join(cache.dir, `${key}.json`), '{"warnings":[]}');
+  assert.equal(cache.get(key), null, "malformed entry is a miss, not a crash");
 });
 
 test("the cache key is bound to the repository, so a committed cache from elsewhere never matches", () => {
@@ -176,4 +181,76 @@ test("the cache key is bound to the repository, so a committed cache from elsewh
     ResultCache.key("e", "id", [], a.dir, ["a.js"]),
     ResultCache.key("e", "id", [], b.dir, ["a.js"]),
   );
+});
+
+test("protected baseline paths are normalized and case-folded (verifier recheck repro D)", () => {
+  for (const evil of [
+    ".//.git/config",
+    ".GIT/config",
+    ".Git/hooks/pre-commit",
+    "a/../.git/config",
+    ".git/./config",
+    "x/.git/config",
+    ".//.code-intel.json",
+    "./.CODE-INTEL.JSON",
+    ".\\.git\\config",
+  ]) {
+    const issues = validateConfig({ baseline: evil }).issues;
+    assert.ok(
+      issues.some((i) => i.path === "baseline"),
+      `${evil} must be rejected`,
+    );
+  }
+  for (const ok of [
+    ".code-intel/baseline.json",
+    "tools/gitignored-baseline.json",
+    ".github/baseline.json",
+  ]) {
+    assert.deepEqual(validateConfig({ baseline: ok }).issues, [], `${ok} is fine`);
+  }
+});
+
+test(
+  "reading a baseline through a symlinked parent directory is refused and never echoes the outside file (verifier recheck repro D)",
+  skipWin,
+  () => {
+    const outside = mk({ hosts: "127.0.0.1 localhost\nsecret-looking-text\n" });
+    const p = mk();
+    symlinkSync(outside.dir, join(p.dir, "out"));
+    try {
+      loadBaseline(p.dir, "out/hosts");
+      assert.fail("must throw");
+    } catch (e) {
+      assert.ok(e instanceof UsageError);
+      assert.equal(
+        `${(e as Error).message}${(e as UsageError).details.join()}`.includes("secret-looking"),
+        false,
+      );
+    }
+    // an unparseable baseline reports a generic message, not the parser's quote of the file
+    const q = mk({ ".code-intel/baseline.json": "{ secret-text-here }" });
+    try {
+      loadBaseline(q.dir, ".code-intel/baseline.json");
+      assert.fail("must throw");
+    } catch (e) {
+      assert.equal(
+        `${(e as Error).message}${(e as UsageError).details.join()}`.includes("secret-text"),
+        false,
+      );
+    }
+  },
+);
+
+test("the text report escapes bidirectional and zero-width characters too (verifier recheck G)", async () => {
+  const { clean } = await import("../../src/report/text.ts");
+  const evil = `x‮⁦y​z﻿.js`;
+  const out = clean(evil);
+  assert.equal(out, "x\\u202e\\u2066y\\u200bz\\ufeff.js");
+  assert.equal(/[‪-‮⁦-⁩​﻿]/.test(out), false);
+  assert.equal(
+    clean("normal-file_name é ü.ts"),
+    "normal-file_name é ü.ts",
+    "ordinary Unicode is untouched",
+  );
+  assert.equal(clean("a\nb\tc\u001b"), "a\\nb\\tc\\x1b");
 });

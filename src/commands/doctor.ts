@@ -1,5 +1,7 @@
 import { existsSync } from "node:fs";
+import { homedir } from "node:os";
 import { join } from "node:path";
+import { defaultCacheDir } from "../core/cache.ts";
 import { CONFIG_FILE, loadConfig } from "../core/config.ts";
 import { UsageError } from "../core/errors.ts";
 import { findBinary } from "../core/exec.ts";
@@ -23,6 +25,8 @@ export interface DoctorReport {
     hint: string | null;
   }>;
   optional: Array<{ name: string; available: boolean; note: string }>;
+  /** Where cached results are kept (outside the repository); `~` stands for the home directory. */
+  cacheDir: string;
   ok: boolean;
 }
 
@@ -73,6 +77,7 @@ export async function runDoctor(
         note: "used by `code-intel impact` for import-graph test selection",
       },
     ],
+    cacheDir: defaultCacheDir(root).replace(homedir(), "~"),
     ok: false,
   };
   report.ok = report.git && cfg.valid && report.engines.every((e) => e.available);
@@ -95,6 +100,7 @@ export function renderDoctor(r: DoctorReport): string {
       `  [${e.available ? "ok" : "MISSING"}] ${e.name.padEnd(14)} ${e.category.padEnd(8)} ${e.available ? (e.version ?? "") : (e.hint ?? "")}`,
     );
   }
+  L.push("", `Result cache: ${r.cacheDir} (outside the repository; safe to delete)`);
   L.push("", "Optional");
   for (const o of r.optional)
     L.push(`  [${o.available ? "ok" : "absent"}] ${o.name.padEnd(14)} ${o.note}`);

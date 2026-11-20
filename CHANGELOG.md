@@ -26,4 +26,16 @@ Found by scanning this repository with itself and by an independent review that 
 - Files reached through a symlinked parent directory are not scanned; `git` runs with textconv and external diff disabled.
 - Repository-supplied configuration that weakens a scan is always disclosed; `--ignore-repo-config` discards it.
 - Cache entries are validated and keyed by config and rule-file contents (previously, editing a rule or `.gitleaks.toml` did not invalidate cached results).
-- Secrets-category semgrep findings use a fixed message; text output escapes control characters; identical lines get distinct fingerprints; `impact` no longer has a quadratic regex; engine downloads in CI are checksum-verified.
+- Secrets-category semgrep findings use a fixed message; text output escapes control and invisible (bidirectional, zero-width) characters; identical lines get distinct fingerprints; `impact` no longer has a quadratic regex.
+- A second independent pass found the first fixes only partly effective; corrected before release:
+  - `--ignore-repo-config` now truly ignores the repository's gitleaks config and ignore file (previously a staged `.gitleaks.toml` was still auto-discovered while the report claimed it was ignored); inline `gitleaks:allow` / `nosemgrep` comments and `.semgrepignore` are counted and disclosed.
+  - The result cache moved **out of the repository** into the user's cache directory (`CODE_INTEL_CACHE_DIR` overrides it): a cache inside a scanned repository cannot be trusted.
+  - Exclude globs are bounded in count, expansion and total matching work.
+  - Git clean filters from a hostile `.git/config` are neutralized (not only textconv).
+  - Protected baseline paths are normalized and case-folded; baseline reads refuse symlinked parents and never echo parser messages.
+  - CI binary downloads use SHA-256 hashes pinned in the repository; the release job installs no third-party tools and requires the tag on `main` and a green CI run for the commit.
+
+### Fixed
+
+- A repository's own `.gitleaksignore` entries now take effect (gitleaks is run from the staging directory so its fingerprints are repo-relative, as in a manual run).
+- Engine error details report the real exception line (not a Python traceback header) with absolute paths scrubbed.

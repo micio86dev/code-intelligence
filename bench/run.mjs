@@ -39,6 +39,9 @@ const CORPUS = [
 
 const env = { ...process.env, NO_COLOR: "1" };
 delete env.NODE_TEST_CONTEXT;
+// The result cache lives outside the repository; give the benchmark its own so it never touches yours.
+env.CODE_INTEL_CACHE_DIR = mkdtempSync(join(tmpdir(), "ci-bench-cache-"));
+process.on("exit", () => rmSync(env.CODE_INTEL_CACHE_DIR, { recursive: true, force: true }));
 
 /** Run a command under /usr/bin/time to capture wall time and peak RSS of the process tree's largest member. */
 function timed(cmd, cmdArgs, cwd) {
@@ -247,7 +250,7 @@ for (const r of CORPUS) {
     warmRuns.push(lastWarm.wallMs);
   }
   out.codeIntelFullWarm = { wallMs: stats(warmRuns), ...summarize(parse(lastWarm)) };
-  rmSync(join(dir, ".code-intel"), { recursive: true, force: true });
+  rmSync(env.CODE_INTEL_CACHE_DIR, { recursive: true, force: true }); // cold again for the next scenario
 
   // D. Incremental: change one source file and scan only the change.
   const target =

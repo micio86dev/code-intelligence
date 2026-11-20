@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { after, test } from "node:test";
-import { fakeAwsKey, git, makeProject } from "../helpers.ts";
+import { fakeAwsKey, git, makeProject, TEST_CACHE_DIR } from "../helpers.ts";
 import { OFFLINE, runCli } from "./helpers.ts";
 
 const projects: Array<{ cleanup(): void }> = [];
@@ -82,7 +82,7 @@ test("init creates a valid config, never overwrites, and keeps the cache out of 
   const first = runCli(["init"], p.dir);
   assert.equal(first.code, 0);
   assert.equal(JSON.parse(readFileSync(join(p.dir, ".code-intel.json"), "utf8")).failOn, "high");
-  assert.equal(readFileSync(join(p.dir, ".code-intel/.gitignore"), "utf8"), "cache/\n");
+  assert.equal(existsSync(join(p.dir, ".code-intel")), false, "init writes only the config file");
   const before = readFileSync(join(p.dir, ".code-intel.json"), "utf8");
   const second = runCli(["init"], p.dir);
   assert.equal(second.code, 2);
@@ -165,11 +165,20 @@ test("the result cache never stores the secret and is served on the second run",
     second.engines.find((e: { engine: string }) => e.engine === "gitleaks").cached,
     true,
   );
-  const cacheDir = join(p.dir, ".code-intel/cache");
-  assert.ok(existsSync(cacheDir));
-  for (const f of readdirSync(cacheDir)) {
+  assert.equal(
+    existsSync(join(p.dir, ".code-intel/cache")),
+    false,
+    "nothing is cached inside the repository",
+  );
+  const walk = (d: string): string[] =>
+    readdirSync(d, { withFileTypes: true }).flatMap((e) =>
+      e.isDirectory() ? walk(join(d, e.name)) : [join(d, e.name)],
+    );
+  const files = walk(TEST_CACHE_DIR).filter((f) => f.endsWith(".json"));
+  assert.ok(files.length > 0, "entries exist in the user cache directory");
+  for (const f of files) {
     assert.equal(
-      readFileSync(join(cacheDir, f), "utf8").includes(SECRET),
+      readFileSync(f, "utf8").includes(SECRET),
       false,
       `cache file ${f} leaked the secret`,
     );
@@ -178,6 +187,26 @@ test("the result cache never stores the secret and is served on the second run",
     runCli(["scan", "--format", "json", "--no-cache", "--engines", "secrets"], p.dir).stdout,
   );
   assert.equal(fresh.engines[0].cached, false);
+});
+
+test("a forged cache entry planted in the repository is ignored by a real scan (verifier recheck F)", () => {
+  const p = defectProject();
+  const first = JSON.parse(
+    runCli(["scan", "--format", "json", "--engines", "secrets"], p.dir).stdout,
+  );
+  assert.equal(first.findings.length, 1);
+  // A hostile repository plants "clean" entries inside itself: they must never be consulted.
+  mkdirSync(join(p.dir, ".code-intel/cache"), { recursive: true });
+  for (const name of ["x", "y"]) {
+    writeFileSync(
+      join(p.dir, ".code-intel/cache", `${name}.json`),
+      '{"findings":[],"warnings":[]}',
+    );
+  }
+  const again = JSON.parse(
+    runCli(["scan", "--format", "json", "--engines", "secrets"], p.dir).stdout,
+  );
+  assert.equal(again.findings.length, 1);
 });
 
 test("a clean change passes with exit 0", () => {
@@ -509,7 +538,12 @@ test("repo-supplied config that weakens a scan is disclosed, and --ignore-repo-c
       .stdout,
   );
   assert.equal(strict.config.ignored, true);
-  assert.deepEqual(strict.config.inEffect, []);
+  assert.ok(
+    strict.config.inEffect.every(
+      (x: string) => !/failOn|exclude|baseline|gitleaks\.toml|\.code-intel/.test(x),
+    ),
+    "only engine-native suppressors may remain listed",
+  );
   assert.equal(runCli(["scan", "--ignore-repo-config", "--new-only"], p.dir).code, 2);
 });
 
@@ -555,10 +589,13 @@ test("semgrep secrets rules that interpolate the matched text never copy it into
     "interpolated secret must not appear in output",
   );
   assert.equal(r.stderr.includes(secretish), false);
-  const dir = join(p.dir, ".code-intel/cache");
-  if (existsSync(dir))
-    for (const x of readdirSync(dir))
-      assert.equal(readFileSync(join(dir, x), "utf8").includes(secretish), false);
+  const walk = (d: string): string[] =>
+    readdirSync(d, { withFileTypes: true }).flatMap((e) =>
+      e.isDirectory() ? walk(join(d, e.name)) : [join(d, e.name)],
+    );
+  for (const f of walk(TEST_CACHE_DIR).filter((x) => x.endsWith(".json"))) {
+    assert.equal(readFileSync(f, "utf8").includes(secretish), false, `cache file leaked: ${f}`);
+  }
 });
 
 test("the text report escapes control characters from file names, so a repository cannot forge report lines (verifier repro)", {
@@ -617,4 +654,62 @@ test("editing a local semgrep rule or the repo's gitleaks config invalidates cac
   const hidden = sec();
   assert.equal(hidden.engines[0].cached, false, "adding a gitleaks config is a cache miss");
   assert.equal(hidden.findings.length, 0);
+});
+
+test("--ignore-repo-config also bypasses a staged .gitleaks.toml and a root .gitleaksignore (verifier recheck repro A)", () => {
+  const toml = '[extend]\nuseDefault = true\n[allowlist]\npaths = [".*"]\n';
+  // The hostile allowlist is itself part of the change, so it would be staged next to the file under scan.
+  const p = project({ "a.txt": "x\n" });
+  p.write(".gitleaks.toml", toml);
+  p.write("creds.txt", `aws_access_key_id = ${SECRET}\n`);
+  const run = (...flags: string[]) =>
+    JSON.parse(
+      runCli(["scan", "--format", "json", "--engines", "secrets", ...flags], p.dir).stdout,
+    );
+  assert.equal(run().findings.length, 0, "default mode honors the repo config (and discloses it)");
+  const strict = run("--ignore-repo-config");
+  assert.equal(strict.findings.length, 1, "the flag must really ignore it");
+  assert.equal(strict.config.ignored, true);
+
+  // gitleaks reads .gitleaksignore from its working directory by default: the flag must beat that too.
+  const q = project({ "a.txt": "x\n" });
+  q.write("creds.txt", `aws_access_key_id = ${SECRET}\n`);
+  const fp = (
+    JSON.parse(
+      runCli(["scan", "--format", "json", "--engines", "secrets", "--no-cache"], q.dir).stdout,
+    ).findings[0] ?? {}
+  ).line;
+  assert.equal(fp, 1);
+  q.write(".gitleaksignore", "creds.txt:aws-access-token:1\n");
+  const hidden = JSON.parse(
+    runCli(["scan", "--format", "json", "--engines", "secrets", "--no-cache"], q.dir).stdout,
+  );
+  assert.equal(hidden.findings.length, 0, "precondition: the repo's .gitleaksignore hides it");
+  const shown = JSON.parse(
+    runCli(
+      ["scan", "--format", "json", "--engines", "secrets", "--no-cache", "--ignore-repo-config"],
+      q.dir,
+    ).stdout,
+  );
+  assert.equal(shown.findings.length, 1);
+});
+
+test("inline suppression comments are counted and disclosed, with and without --ignore-repo-config (verifier recheck E)", () => {
+  const p = project({
+    ".code-intel.json": CONFIG,
+    ".semgrep/rules.yml": RULE,
+    "ok.js": "export const ok = 1;\n",
+  });
+  p.write("bad.js", "eval(process.argv[2]); // nosemgrep\n");
+  const j = JSON.parse(runCli(["scan", "--format", "json", "--engines", "sast"], p.dir).stdout);
+  assert.equal(j.findings.length, 0, "the engine honors the inline suppression");
+  assert.ok(j.config.inEffect.some((x: string) => /1 inline suppression comment/.test(x)));
+  const strict = JSON.parse(
+    runCli(["scan", "--format", "json", "--engines", "sast", "--ignore-repo-config"], p.dir).stdout,
+  );
+  assert.ok(
+    strict.config.inEffect.some((x: string) => /inline suppression/.test(x)),
+    "listed even when repo config is ignored",
+  );
+  assert.match(runCli(["scan", "--engines", "sast"], p.dir).stdout, /inline suppression comment/);
 });

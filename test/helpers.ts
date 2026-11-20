@@ -3,6 +3,19 @@ import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
+/**
+ * Every test process gets its own cache directory, so tests never touch (or depend on) the developer's real
+ * cache, and child processes spawned by tests inherit it through the environment.
+ */
+export const TEST_CACHE_DIR: string = (() => {
+  const preset = process.env.CODE_INTEL_CACHE_DIR;
+  const dir = preset ?? mkdtempSync(join(tmpdir(), "ci-cache-"));
+  process.env.CODE_INTEL_CACHE_DIR = dir;
+  // Only delete what this process created; never a directory a developer configured.
+  if (!preset) process.on("exit", () => rmSync(dir, { recursive: true, force: true }));
+  return dir;
+})();
+
 /** Hermetic git env: ignores the developer's global config, hooks and templates. */
 export const GIT_ENV = {
   ...process.env,

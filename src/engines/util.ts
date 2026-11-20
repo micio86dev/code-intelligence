@@ -33,6 +33,31 @@ export const firstLine = (s: string, max = 300): string =>
     .trim()
     .slice(0, max);
 
+/** Absolute paths in an engine's error text would leak the machine's layout into reports; replace them. */
+export function scrubPaths(s: string): string {
+  return s
+    .replace(/[A-Za-z]:\\(?:[^\s\\'"]+\\)+[^\s\\'"]*/g, "<path>")
+    .replace(/\/(?:[\w.@+~-]+\/)+[\w.@+~-]*/g, "<path>");
+}
+
+/**
+ * The most useful single line of an engine's stderr, without paths. A Python traceback starts with the
+ * boilerplate line "Traceback (most recent call last):" and ends with the actual exception, so for those
+ * the last line is reported instead of the first.
+ */
+export function errorDetail(stderr: string): string {
+  const lines = stderr
+    .trim()
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+  if (lines.length === 0) return "no error output";
+  const pick = /^Traceback\b/.test(lines[0] ?? "")
+    ? (lines[lines.length - 1] ?? "")
+    : (lines[0] ?? "");
+  return scrubPaths(pick).slice(0, 300);
+}
+
 /** Turn an abnormal process result into a typed failure (never includes stdout, which may hold code). */
 export function processFailure(
   name: string,
@@ -48,7 +73,7 @@ export function processFailure(
     return new EngineFailure("timeout", `${name}: exceeded the time limit and was killed`);
   if (r.truncated) return new EngineFailure("error", `${name}: output exceeded the size limit`);
   if (r.code === null || !okCodes.includes(r.code)) {
-    const detail = firstLine(r.stderr) || "no error output";
+    const detail = errorDetail(r.stderr);
     return new EngineFailure(
       "error",
       `${name}: exited with code ${r.code ?? r.signal} (${detail})`,

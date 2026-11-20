@@ -138,10 +138,11 @@ The CLI is the same everywhere; only the one-time wiring differs. [code-intellig
 
 ```bash
 npm uninstall -g code-intelligence
-rm -rf .code-intel .code-intel.json     # per-project state and config (optional)
+rm -rf .code-intel .code-intel.json     # per-project config and baseline (optional)
+rm -rf "$(code-intel doctor --json | jq -r .cacheDir | sed "s#^~#$HOME#")"   # this repository's result cache (optional)
 ```
 
-It writes nothing outside the repository (`.code-intel/`) and temporary directories that are removed after each run.
+It writes only your optional `.code-intel.json` and `.code-intel/baseline.json` (if you run `init` / `baseline`) inside a repository, a result cache in your user cache directory (`code-intel doctor` prints the path; safe to delete), and temporary directories that are removed after each run.
 
 ## Documentation
 

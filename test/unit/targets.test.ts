@@ -209,3 +209,30 @@ test("a hostile .git/config textconv is not executed by diff (verifier repro)", 
     "code-intel must not run the repository's textconv command",
   );
 });
+
+test("a hostile .git/config clean filter is not executed by diff (verifier recheck repro C)", {
+  skip: process.platform === "win32",
+}, async () => {
+  const { chmodSync, existsSync, rmSync, writeFileSync } = await import("node:fs");
+  const { execFileSync } = await import("node:child_process");
+  const { join } = await import("node:path");
+  const p = mk({ "a.txt": "one\n", ".gitattributes": "* filter=pwn\n" });
+  p.commit();
+  const helper = mk({}, { git: false });
+  const marker = join(helper.dir, "PWNED");
+  const script = join(helper.dir, "clean.sh");
+  writeFileSync(script, `#!/bin/sh\ntouch "${marker}"\ncat\n`);
+  chmodSync(script, 0o755);
+  git(p.dir, "config", "filter.pwn.clean", script);
+  git(p.dir, "config", "filter.pwn.smudge", "cat");
+  writeFileSync(join(p.dir, "a.txt"), "one\ntwo\n");
+
+  execFileSync("git", ["diff", "HEAD"], { cwd: p.dir, env: GIT_ENV, stdio: "ignore" });
+  assert.equal(existsSync(marker), true, "precondition: a plain git diff runs the clean filter");
+  rmSync(marker);
+
+  const t = await resolveTarget({ cwd: p.dir, mode: "changed", ref: null, exclude: EXCL });
+  assert.deepEqual(t.files, ["a.txt"]);
+  assert.deepEqual(t.changedLines.get("a.txt"), [{ start: 2, end: 2 }], "the diff still computes");
+  assert.equal(existsSync(marker), false, "code-intel must not run the repository's clean filter");
+});

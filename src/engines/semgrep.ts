@@ -1,6 +1,8 @@
 import type { Config } from "../core/config.ts";
+import { EngineFailure } from "../core/errors.ts";
 import { chunkByLength, exec } from "../core/exec.ts";
 import { hashPaths } from "../core/hashing.ts";
+import { assertPlainPath } from "../core/safefs.ts";
 import type { RawFinding, Severity } from "../types.ts";
 import { type Engine, type EngineOutput, isLockfile, type RunContext } from "./engine.ts";
 import { detectBinary, parseJson, processFailure, toRel } from "./util.ts";
@@ -61,7 +63,16 @@ export const semgrep: Engine = {
   ],
   async run(ctx: RunContext): Promise<EngineOutput> {
     const base = ["scan", "--metrics=off", "--json", "--quiet", "--disable-version-check"];
-    for (const c of ctx.config.engines.semgrep.configs) base.push("--config", c);
+    for (const c of ctx.config.engines.semgrep.configs) {
+      if (!isRegistry(c)) {
+        try {
+          assertPlainPath(ctx.root, c); // a symlinked rule path could point at files outside the repository
+        } catch (e) {
+          throw new EngineFailure("error", `semgrep: ${(e as Error).message}`);
+        }
+      }
+      base.push("--config", c);
+    }
 
     // Semgrep's own file discovery applies .gitignore, .semgrepignore and its default ignores
     // (tests, vendored and minified code). Passing explicit file paths would bypass all of that and

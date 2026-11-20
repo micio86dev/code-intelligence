@@ -13,6 +13,7 @@ import {
 import { plan } from "../core/planner.ts";
 import { runPlan } from "../core/runner.ts";
 import { lexists } from "../core/safefs.ts";
+import { countInlineSuppressions } from "../core/suppressions.ts";
 import { findGitRoot, resolveTarget } from "../core/targets.ts";
 import type { Engine } from "../engines/engine.ts";
 import { ENGINES } from "../engines/registry.ts";
@@ -76,14 +77,25 @@ function configDisclosure(
   root: string,
   config: Config,
   baselineInUse: boolean,
+  inlineSuppressions: number,
 ): ScanReport["config"] {
   const file = lexists(join(root, CONFIG_FILE)) ? CONFIG_FILE : null;
-  if (config.repoConfigIgnored) return { file, ignored: true, inEffect: [] };
+  // Engine-native suppressors that no tool flag can switch off are listed in every mode.
+  const native: string[] = [];
+  if (lexists(join(root, ".semgrepignore")))
+    native.push(".semgrepignore present (honored by semgrep)");
+  if (inlineSuppressions > 0) {
+    native.push(
+      `${inlineSuppressions} inline suppression comment(s) in scanned files (gitleaks:allow / nosemgrep)`,
+    );
+  }
+  if (config.repoConfigIgnored) return { file, ignored: true, inEffect: native };
   const inEffect = describeNonDefaults(config);
-  for (const f of [".gitleaks.toml", ".gitleaksignore", ".semgrepignore"]) {
+  for (const f of [".gitleaks.toml", ".gitleaksignore"]) {
     if (lexists(join(root, f))) inEffect.push(`${f} present`);
   }
   if (baselineInUse) inEffect.push("baseline in use");
+  inEffect.push(...native);
   return { file, ignored: false, inEffect };
 }
 
@@ -185,7 +197,12 @@ export async function runScan(
       suppressed: { outsideChangedLines, baseline: baselineSuppressed },
     },
     findings,
-    config: configDisclosure(target.root, config, Boolean(baseline)),
+    config: configDisclosure(
+      target.root,
+      config,
+      Boolean(baseline),
+      countInlineSuppressions(target.root, target.files),
+    ),
     exitCode,
   };
   return { report, root: target.root, config };

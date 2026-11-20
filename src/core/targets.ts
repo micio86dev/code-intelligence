@@ -10,11 +10,47 @@ const GIT_TIMEOUT = 30_000;
 // settings that make `git diff`/`ls-files` run external programs: fsmonitor hooks and textconv/external diff.
 const GIT = ["-c", "core.quotepath=off", "-c", "core.fsmonitor=false", "-c", "diff.external="];
 
+const filterOverrideCache = new Map<string, string[]>();
+
+/**
+ * `git diff` against the working tree runs a repository's configured clean filters
+ * (`filter.<name>.clean` in .git/config) to hash the files it compares, and --no-textconv does not stop that.
+ * A copied or extracted .git directory can therefore run commands. Override every configured filter with an
+ * empty command (verified to run nothing while the diff still computes). Users of git-lfs see raw content
+ * instead of pointers for LFS-tracked files, which only changes line ranges for binaries.
+ */
+async function filterOverrides(cwd: string): Promise<string[]> {
+  const hit = filterOverrideCache.get(cwd);
+  if (hit) return hit;
+  const r = await exec("git", [...GIT, "config", "--get-regexp", "^filter\\."], {
+    cwd,
+    timeoutMs: GIT_TIMEOUT,
+  });
+  const names = new Set<string>();
+  for (const line of r.stdout.split("\n")) {
+    const m = /^filter\.(.+)\.(?:clean|smudge|process|required)(?:\s|$)/.exec(line);
+    if (m?.[1]) names.add(m[1]);
+  }
+  const args = [...names].flatMap((n) => [
+    "-c",
+    `filter.${n}.clean=`,
+    "-c",
+    `filter.${n}.smudge=`,
+    "-c",
+    `filter.${n}.process=`,
+  ]);
+  filterOverrideCache.set(cwd, args);
+  return args;
+}
+
 async function git(
   cwd: string,
   args: string[],
 ): Promise<{ ok: boolean; out: string; err: string }> {
-  const r = await exec("git", [...GIT, ...args], { cwd, timeoutMs: GIT_TIMEOUT });
+  const r = await exec("git", [...GIT, ...(await filterOverrides(cwd)), ...args], {
+    cwd,
+    timeoutMs: GIT_TIMEOUT,
+  });
   if (r.spawnError)
     throw new UsageError("git is required for changed-file scans but was not found on PATH");
   return { ok: r.code === 0, out: r.stdout, err: r.stderr };

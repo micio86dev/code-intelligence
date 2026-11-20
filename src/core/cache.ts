@@ -1,10 +1,18 @@
 import { createHash } from "node:crypto";
-import { readFileSync, realpathSync, statSync } from "node:fs";
-import { join } from "node:path";
+import {
+  mkdirSync,
+  readFileSync,
+  realpathSync,
+  renameSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
+import { homedir } from "node:os";
+import { join, resolve } from "node:path";
 import { CATEGORIES, isSeverity, type RawFinding } from "../types.ts";
 import { VERSION } from "../version.ts";
 import { isSafeGlob } from "./glob.ts";
-import { lexists, safeWrite } from "./safefs.ts";
 
 export interface CacheEntry {
   findings: RawFinding[];
@@ -46,16 +54,45 @@ export function isCacheEntry(x: unknown): x is CacheEntry {
 }
 
 /**
+ * Where cached results live: the user's own cache directory, never the repository. A cache inside a repository
+ * you scan is attacker-controlled (the key is predictable), so it cannot be trusted; one outside it can.
+ * `CODE_INTEL_CACHE_DIR` overrides the location (tests, CI, or a RAM disk).
+ */
+export function defaultCacheDir(root: string): string {
+  const override = process.env.CODE_INTEL_CACHE_DIR;
+  let base: string;
+  if (override) base = resolve(override);
+  else if (process.platform === "win32") {
+    base = join(
+      process.env.LOCALAPPDATA ?? join(homedir(), "AppData", "Local"),
+      "code-intelligence",
+    );
+  } else if (process.platform === "darwin") {
+    base = join(homedir(), "Library", "Caches", "code-intelligence");
+  } else {
+    base = join(process.env.XDG_CACHE_HOME || join(homedir(), ".cache"), "code-intelligence");
+  }
+  let real = root;
+  try {
+    real = realpathSync(root);
+  } catch {
+    /* keep the logical root */
+  }
+  return join(base, createHash("sha256").update(real).digest("hex").slice(0, 16));
+}
+
+/**
  * Exact-match result cache. A key covers everything that can change an engine's output: this tool's
  * version, the repository's real path, the engine binary identity, its config inputs, and the content
  * hash of every input file. Any difference is a miss; there is no partial reuse and no TTL guesswork.
+ * Entries are still schema-validated on read (defense in depth).
  */
 export class ResultCache {
-  private readonly root: string;
+  readonly dir: string;
   readonly enabled: boolean;
-  constructor(root: string, enabled: boolean) {
-    this.root = root;
+  constructor(root: string, enabled: boolean, dir: string = defaultCacheDir(root)) {
     this.enabled = enabled;
+    this.dir = dir;
   }
 
   static binaryIdentity(path: string | null): string {
@@ -101,9 +138,7 @@ export class ResultCache {
   get(key: string): CacheEntry | null {
     if (!this.enabled) return null;
     try {
-      const parsed: unknown = JSON.parse(
-        readFileSync(join(this.root, ".code-intel", "cache", `${key}.json`), "utf8"),
-      );
+      const parsed: unknown = JSON.parse(readFileSync(join(this.dir, `${key}.json`), "utf8"));
       return isCacheEntry(parsed) ? parsed : null;
     } catch {
       return null;
@@ -112,12 +147,21 @@ export class ResultCache {
 
   put(key: string, entry: CacheEntry): void {
     if (!this.enabled) return;
+    const tmp = join(
+      this.dir,
+      `.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2)}.tmp`,
+    );
     try {
-      const ignore = ".code-intel/cache/.gitignore";
-      if (!lexists(join(this.root, ignore))) safeWrite(this.root, ignore, "*\n");
-      safeWrite(this.root, `.code-intel/cache/${key}.json`, JSON.stringify(entry));
+      mkdirSync(this.dir, { recursive: true, mode: 0o700 });
+      writeFileSync(tmp, JSON.stringify(entry), { flag: "wx", mode: 0o600 });
+      renameSync(tmp, join(this.dir, `${key}.json`)); // atomic: readers never see partial files
     } catch {
-      /* a cache write failure (including a refused symlink) must never fail a scan */
+      // A cache write failure must never fail a scan, and neither may cleaning up after it.
+      try {
+        rmSync(tmp, { force: true });
+      } catch {
+        /* nothing more to do */
+      }
     }
   }
 }

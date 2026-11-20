@@ -20,7 +20,13 @@ type Tok =
   | { t: "gstar" }
   | { t: "gslash" };
 
+import { UsageError } from "./errors.ts";
+
 export const MAX_GLOB_LENGTH = 200;
+export const MAX_PATTERNS = 100;
+export const MAX_TOTAL_ALTERNATIVES = 64;
+/** Upper bound on matcher work (tokens x path length, summed over every call) before a scan is aborted. */
+const WORK_BUDGET = 400_000_000;
 export const MAX_DOUBLE_STAR = 3;
 const MAX_WILDCARDS = 12;
 const MAX_BRACE_EXPANSIONS = 32;
@@ -217,6 +223,7 @@ export function compileGlobs(patterns: readonly string[]): (path: string) => boo
       }
     }
   }
+  let work = 0;
   return (path) => {
     if (names.size > 0 || suffixes.length > 0) {
       for (const seg of path.split("/")) {
@@ -224,7 +231,16 @@ export function compileGlobs(patterns: readonly string[]): (path: string) => boo
         for (const s of suffixes) if (seg.length >= s.length && seg.endsWith(s)) return true;
       }
     }
-    for (const toks of general) if (matchTokens(toks, path)) return true;
+    for (const toks of general) {
+      // Even linear-time matching can be made slow by thousands of patterns: bound the total work.
+      work += toks.length * (path.length + 1);
+      if (work > WORK_BUDGET) {
+        throw new UsageError(
+          "The exclude patterns are too expensive to evaluate on this repository; use fewer or simpler patterns",
+        );
+      }
+      if (matchTokens(toks, path)) return true;
+    }
     return false;
   };
 }
@@ -253,4 +269,17 @@ export function globProblem(pattern: string): string | null {
     return `must not expand to more than ${MAX_BRACE_EXPANSIONS} brace alternatives`;
   }
   return null;
+}
+
+/** How many concrete patterns the given globs expand to once `{a,b}` groups are multiplied out. */
+export function totalAlternatives(patterns: readonly string[]): number {
+  let n = 0;
+  for (const p of patterns) {
+    try {
+      n += expandBraces(normalize(p)).length;
+    } catch {
+      n += MAX_TOTAL_ALTERNATIVES + 1;
+    }
+  }
+  return n;
 }

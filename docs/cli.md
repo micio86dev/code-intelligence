@@ -73,4 +73,4 @@ Reports git, repository state, config validity, each engine's availability/versi
 
 ## init
 
-Creates `.code-intel.json` (minimal, with `$schema`) and `.code-intel/.gitignore`. Never overwrites: exits 2 if the config exists.
+Creates `.code-intel.json` (minimal, with `$schema`). Never overwrites, never follows a symlink: exits 2 if the config exists (a dangling symlink counts as existing).

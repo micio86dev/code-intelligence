@@ -43,4 +43,4 @@ Gitignore-style: a pattern without `/` matches that name at any depth and exclud
 
 ## Environment
 
-`code-intel` reads no environment variables of its own. Child engines inherit your environment (for example proxy settings); `NO_COLOR=1` and `SEMGREP_SEND_METRICS=off` are set for them.
+`CODE_INTEL_CACHE_DIR` sets where cached results are stored (default: your user cache directory: `~/Library/Caches` on macOS, `$XDG_CACHE_HOME` or `~/.cache` on Linux, `%LOCALAPPDATA%` on Windows). Nothing else is read. Child engines inherit your environment (for example proxy settings); `NO_COLOR=1`, `SEMGREP_SEND_METRICS=off` and a `PWD` matching their working directory are set for them.

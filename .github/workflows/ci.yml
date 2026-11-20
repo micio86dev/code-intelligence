@@ -112,8 +112,7 @@ jobs:
         run: |
           v=1.7.7
           curl -fsSL -o al.tgz "https://github.com/rhysd/actionlint/releases/download/v${v}/actionlint_${v}_linux_amd64.tar.gz"
-          curl -fsSL -o al.sums "https://github.com/rhysd/actionlint/releases/download/v${v}/actionlint_${v}_checksums.txt"
-          echo "$(grep " actionlint_${v}_linux_amd64.tar.gz$" al.sums | cut -d' ' -f1)  al.tgz" | sha256sum -c -
+          echo "023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757  al.tgz" | sha256sum -c -
           tar -xzf al.tgz actionlint
           ./actionlint -color
       - uses: actions/dependency-review-action@bbc44d14a204704ccc493733616cd1e93a0321ec # v5.0.1

@@ -11,20 +11,16 @@ const TEMPLATE = {
   exclude: [],
 };
 
-/** Create .code-intel.json and the .code-intel/ working dir. Never overwrites anything, never follows a link. */
+/** Create .code-intel.json. Never overwrites anything and never follows a link. */
 export async function runInit(cwd: string): Promise<{ created: string[] }> {
   const root = (await findGitRoot(cwd)) ?? cwd;
   // lstat-based: a dangling symlink named .code-intel.json counts as "exists" (existsSync would say no).
-  if (lexists(join(root, CONFIG_FILE)))
+  if (lexists(join(root, CONFIG_FILE))) {
     throw new UsageError(`${CONFIG_FILE} already exists; leaving it untouched`);
+  }
   try {
     safeWrite(root, CONFIG_FILE, `${JSON.stringify(TEMPLATE, null, 2)}\n`);
-    const created = [CONFIG_FILE];
-    if (!lexists(join(root, ".code-intel", ".gitignore"))) {
-      safeWrite(root, ".code-intel/.gitignore", "cache/\n");
-      created.push(".code-intel/.gitignore");
-    }
-    return { created };
+    return { created: [CONFIG_FILE] };
   } catch (e) {
     if (e instanceof UnsafePathError) throw new UsageError(`init: ${e.message}`);
     throw e;

@@ -10,13 +10,22 @@ const TAG: Record<EngineResult["status"], string> = {
   error: "ERROR",
 };
 
-/** Escape control characters: file names and messages come from the scanned repository and could forge report lines or move the cursor. */
+/**
+ * Escape control and invisible characters: file names and messages come from the scanned repository and could
+ * forge report lines, move the cursor, or visually reorder/hide text (bidirectional overrides, zero-width
+ * and other format characters).
+ */
+const UNSAFE =
+  /[\u0000-\u001f\u007f-\u009f\u00ad\u061c\u180e\u200b-\u200f\u2028-\u202e\u2060-\u206f\ufeff\ufff9-\ufffb]/g;
 export function clean(s: string): string {
-  return s.replace(/[\u0000-\u001f\u007f\u0080-\u009f]/g, (c) => {
+  return s.replace(UNSAFE, (c) => {
     if (c === "\n") return "\\n";
     if (c === "\t") return "\\t";
     if (c === "\r") return "\\r";
-    return `\\x${c.charCodeAt(0).toString(16).padStart(2, "0")}`;
+    const code = c.charCodeAt(0);
+    return code <= 0xff
+      ? `\\x${code.toString(16).padStart(2, "0")}`
+      : `\\u${code.toString(16).padStart(4, "0")}`;
   });
 }
 

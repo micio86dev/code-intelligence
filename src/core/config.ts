@@ -1,8 +1,14 @@
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, posix } from "node:path";
 import { CATEGORIES, isSeverity, PROFILES, type ProfileName, type Severity } from "../types.ts";
 import { UsageError } from "./errors.ts";
-import { globProblem, isSafeGlob } from "./glob.ts";
+import {
+  globProblem,
+  isSafeGlob,
+  MAX_PATTERNS,
+  MAX_TOTAL_ALTERNATIVES,
+  totalAlternatives,
+} from "./glob.ts";
 import { isSymlink } from "./safefs.ts";
 
 export const CONFIG_FILE = ".code-intel.json";
@@ -87,8 +93,14 @@ function isRepoRelative(p: string): boolean {
 
 /** Paths the tool must never write: git internals and its own configuration. */
 function isProtectedPath(p: string): boolean {
-  const norm = p.replace(/\\/g, "/").replace(/^\.\//, "");
-  return norm === ".git" || norm.startsWith(".git/") || norm === CONFIG_FILE;
+  // Normalize first, then compare case-insensitively: `.//.git/config`, `a/../.git/config` and `.GIT/config`
+  // (a case-insensitive file system) all resolve into git's own directory.
+  const parts = posix
+    .normalize(p.replace(/\\/g, "/"))
+    .split("/")
+    .filter((x) => x && x !== ".");
+  if (parts.some((x) => x.toLowerCase() === ".git")) return true;
+  return parts.join("/").toLowerCase() === CONFIG_FILE.toLowerCase();
 }
 
 function strArray(v: unknown, path: string, issues: Issue[]): string[] | null {
@@ -117,6 +129,15 @@ export function validateConfig(raw: unknown): { config: Config; issues: Issue[] 
   if (raw.exclude !== undefined) {
     const arr = strArray(raw.exclude, "exclude", issues);
     if (arr) {
+      if (arr.length > MAX_PATTERNS) {
+        issues.push({ path: "exclude", message: `must have at most ${MAX_PATTERNS} entries` });
+      }
+      if (totalAlternatives(arr) > MAX_TOTAL_ALTERNATIVES) {
+        issues.push({
+          path: "exclude",
+          message: `patterns may expand to at most ${MAX_TOTAL_ALTERNATIVES} alternatives in total (brace groups multiply)`,
+        });
+      }
       arr.forEach((g, i) => {
         const problem = globProblem(g);
         if (problem) issues.push({ path: `exclude[${i}]`, message: problem });
