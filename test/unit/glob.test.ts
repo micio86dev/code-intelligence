@@ -137,3 +137,123 @@ test("verifier repro: a thousand cheap-looking patterns cannot make a scan slow 
   }, /too expensive/);
   assert.ok(performance.now() - t0 < 10_000, `aborted after ${performance.now() - t0}ms`);
 });
+
+// ---- gaps found by mutation testing (code-intel mutate src/core/glob.ts): behavior the first tests never pinned ----
+
+test("braces: nesting, empty alternatives, and unbalanced/misordered braces", () => {
+  const nested = compileGlobs(["x/{a,{b,c}}/y"]);
+  for (const ok of ["x/a/y", "x/b/y", "x/c/y"]) assert.equal(nested(ok), true, ok);
+  assert.equal(nested("x/d/y"), false);
+  assert.equal(nested("x/{b,c}/y"), false, "the braces are consumed, not literal");
+  const empty = compileGlobs(["a{,b}c"]);
+  assert.equal(empty("ac"), true, "an empty alternative is allowed");
+  assert.equal(empty("abc"), true);
+  assert.equal(empty("a-c"), false);
+  // counts are equal but the order is wrong: no group, so everything is literal
+  const misordered = compileGlobs(["}a{"]);
+  assert.equal(misordered("}a{"), true);
+  assert.equal(misordered("a"), false);
+  // an opening brace with no closing partner after it
+  const dangling = compileGlobs(["a{b}c}{"]);
+  assert.equal(dangling("abc}{"), true, "first group expands, the stray pair stays literal");
+});
+
+test("brace expansion cap: exactly 32 alternatives is allowed, 33 is not", () => {
+  const five = "{a,b}{c,d}{e,f}{g,h}{i,j}"; // 2^5 = 32
+  assert.equal(globProblem(five), null);
+  assert.equal(compileGlobs([five])("acegi"), true);
+  assert.equal(compileGlobs([five])("bdfhj"), true);
+  const thirtyThree = "{a,b,c}{1,2,3,4,5,6,7,8,9,10,11}"; // 3 x 11 = 33
+  assert.match(globProblem(thirtyThree) ?? "", /more than 32 brace alternatives/);
+  assert.equal(globProblem("{a,b,c}{1,2,3,4,5,6,7,8,9,10}"), null, "30 is fine");
+});
+
+test("double star: `**` spans slashes, `**/` is zero or more directories, `*` never crosses one", () => {
+  const m = compileGlobs(["a/**", "b/**/c", "**/d", "e/*/f"]);
+  assert.equal(m("a/x/y/z"), true);
+  assert.equal(m("a"), false, "a/** needs the directory itself plus a separator");
+  assert.equal(m("b/c"), true, "zero directories");
+  assert.equal(m("b/x/c"), true);
+  assert.equal(m("b/x/y/c"), true);
+  assert.equal(m("b/xc"), false, "the directory part must end at a slash");
+  assert.equal(m("d"), true);
+  assert.equal(m("x/y/d"), true);
+  assert.equal(m("x/yd"), false);
+  assert.equal(m("e/x/f"), true);
+  assert.equal(m("e/x/y/f"), false, "a single star stays inside one segment");
+  assert.equal(compileGlobs(["src/**"])("src/"), true);
+});
+
+test("character classes: ranges, negation with ! and ^, and an unterminated bracket", () => {
+  const range = compileGlobs(["x/[a-c]1"]);
+  assert.equal(range("x/a1"), true);
+  assert.equal(range("x/c1"), true);
+  assert.equal(range("x/d1"), false);
+  assert.equal(range("x/-1"), false);
+  for (const neg of ["x/[!a-c]1", "x/[^a-c]1"]) {
+    const m = compileGlobs([neg]);
+    assert.equal(m("x/d1"), true, neg);
+    assert.equal(m("x/b1"), false, neg);
+    assert.equal(m("x//1"), false, "a negated class still never matches a slash");
+  }
+  const lit = compileGlobs(["x/a-c]"]);
+  assert.equal(lit("x/a-c]"), true, "a stray closing bracket is literal");
+  const open = compileGlobs(["x/[abc"]);
+  assert.equal(open("x/[abc"), true, "an unterminated class is literal");
+  assert.equal(open("x/a"), false);
+  const multi = compileGlobs(["[abc-e]z", "q[x]"]);
+  assert.equal(multi("dz"), true);
+  assert.equal(multi("fz"), false);
+  assert.equal(multi("qx"), true);
+  assert.equal(compileGlobs(["[!]]x"])("ax"), false, "malformed classes never throw");
+});
+
+test("star and question mark: bare-name fast paths and the general path agree", () => {
+  const m = compileGlobs(["*.min.js", "build?", "a*b"]);
+  assert.equal(m("lib/app.min.js"), true);
+  assert.equal(m("app.js"), false);
+  assert.equal(m("x/build1/y"), true);
+  assert.equal(m("x/build/y"), false, "? needs exactly one character");
+  assert.equal(m("x/build12"), false);
+  assert.equal(m("deep/aXXb/c"), true);
+  assert.equal(m("deep/a/b"), false, "* never crosses a slash");
+  assert.equal(
+    compileGlobs(["*"])("anything/at/all"),
+    true,
+    "a bare * matches every first segment",
+  );
+});
+
+test("normalization: ./ prefix, trailing slash, backslashes, leading slash anchoring", () => {
+  assert.equal(compileGlobs(["./src/gen"])("src/gen/x.ts"), true);
+  assert.equal(compileGlobs(["src/gen/"])("src/gen/x.ts"), true);
+  assert.equal(compileGlobs(["src\\gen"])("src/gen/x.ts"), true, "Windows separators are accepted");
+  assert.equal(compileGlobs(["/gen"])("gen/x"), true);
+  assert.equal(compileGlobs(["/gen"])("src/gen/x"), false, "a leading slash anchors at the root");
+  assert.equal(compileGlobs(["gen"])("src/gen/x"), true, "a bare name matches at any depth");
+});
+
+test("globProblem boundaries: length, double stars, wildcard count, safety", () => {
+  assert.equal(globProblem("a".repeat(200)), null);
+  assert.match(globProblem("a".repeat(201)) ?? "", /at most 200/);
+  assert.equal(globProblem("**/a/**/b/**/c"), null, "three ** are fine");
+  assert.match(globProblem("**/a/**/b/**/c/**/d") ?? "", /at most 3/);
+  assert.equal(globProblem("**/**/**/**/a"), null, "repeated **/ collapse to one");
+  assert.equal(globProblem("*a*b*c*d*e*f*g*h*i*j*k*l"), null, "exactly 12 wildcards");
+  assert.match(globProblem("*a*b*c*d*e*f*g*h*i*j*k*l*m") ?? "", /at most 12 wildcard/);
+  assert.match(globProblem("..") ?? "", /must be relative/);
+  assert.match(globProblem("a/../b") ?? "", /must be relative/);
+  assert.equal(isSafeGlob("a..b"), true, "only a whole `..` segment is traversal");
+  assert.equal(isSafeGlob("C:\\x"), false);
+  assert.equal(isSafeGlob("a/b"), true);
+});
+
+test("totalAlternatives counts expansions and caps runaway input", async () => {
+  const { totalAlternatives } = await import("../../src/core/glob.ts");
+  assert.equal(totalAlternatives(["a", "b"]), 2);
+  assert.equal(totalAlternatives(["{a,b}x", "y"]), 3);
+  assert.ok(
+    totalAlternatives(["{a,b,c}{1,2,3,4,5,6,7,8,9,10,11}"]) > 32,
+    "over-limit patterns count as exceeding the cap",
+  );
+});

@@ -277,3 +277,18 @@ test("engine error details: python tracebacks report the exception, and absolute
     "rules at <path> and ./relative",
   );
 });
+
+test("error details skip runtime boilerplate headers (node and python) and report the exception line", async () => {
+  const { errorDetail } = await import("../../src/engines/util.ts");
+  const nodeErr = [
+    "node:internal/process/promises:394",
+    "    triggerUncaughtException(err, true /* fromPromise */);",
+    "    ^",
+    "",
+    "TypeError: ts.parseConfigFileTextToJson is not a function",
+    "    at TSConfigPreprocessor.rewriteTSConfigFile (file:///x/y.js:46:39)",
+  ].join("\n");
+  assert.equal(errorDetail(nodeErr), "TypeError: ts.parseConfigFileTextToJson is not a function");
+  assert.equal(errorDetail("Error: simple failure\nsecond"), "Error: simple failure");
+  assert.equal(errorDetail("node:internal/x:1\nno exception line\nlast words"), "last words");
+});

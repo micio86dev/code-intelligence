@@ -1,0 +1,10 @@
+{
+  "testRunner": "command",
+  "commandRunner": {
+    "command": "node --test \"test/unit/**/*.test.ts\""
+  },
+  "coverageAnalysis": "off",
+  "reporters": ["json"],
+  "ignorePatterns": ["dist", "bench", "docs", ".github", "odd"],
+  "tsconfigFile": "tsconfig.stryker-unused.json"
+}

@@ -8,7 +8,7 @@ import type { Logger } from "../core/logger.ts";
 import { isPlainFileInside } from "../core/safefs.ts";
 import { resolveTarget } from "../core/targets.ts";
 import { ENGINES } from "../engines/registry.ts";
-import { firstLine } from "../engines/util.ts";
+import { errorDetail } from "../engines/util.ts";
 import type { TargetMode } from "../types.ts";
 import { TOOL_NAME, VERSION } from "../version.ts";
 import { isTestFile } from "./impact.ts";
@@ -349,19 +349,25 @@ export async function runMutate(opts: {
     );
   }
   if (r.code !== 0) {
+    // Stryker logs to stdout and uncaught errors to stderr; strip color codes and pick the real error line.
+    const strip = (s: string) => s.replace(/\u001b\[[0-9;]*m/g, "");
+    const fromErr = errorDetail(strip(r.stderr));
     const detail =
-      firstLine(r.stderr) ||
-      firstLine(
-        r.stdout
-          .split("\n")
-          .filter((l) => /error/i.test(l))
-          .join("\n"),
-      );
+      fromErr !== "no error output"
+        ? fromErr
+        : errorDetail(
+            strip(
+              r.stdout
+                .split("\n")
+                .filter((l) => /error/i.test(l))
+                .join("\n"),
+            ),
+          );
     return finish(
       base({
         engineVersion,
         status: "error",
-        reason: `stryker exited with code ${r.code}${detail ? ` (${detail.replace(/\u001b\[[0-9;]*m/g, "")})` : ""}`,
+        reason: `stryker exited with code ${r.code}${detail ? ` (${detail})` : ""}`,
         exitCode: 3,
       }),
     );

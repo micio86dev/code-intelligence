@@ -1,0 +1,27 @@
+{
+  "generatedAt": "2026-11-20",
+  "engine": "StrykerJS 10.1.1 via code-intel mutate",
+  "target": "src/core/glob.ts (the linear-time glob matcher)",
+  "testCommand": "node --test \"test/unit/**/*.test.ts\" (the project's unit tests)",
+  "before": {
+    "mutants": 479,
+    "killed": 347,
+    "timeout": 55,
+    "survived": 77,
+    "noCoverage": 0,
+    "scorePercent": 83.9,
+    "durationSeconds": 310,
+    "unitTestsInRepo": "the glob tests as they stood after the ReDoS fixes"
+  },
+  "after": {
+    "mutants": 479,
+    "killed": 395,
+    "timeout": 60,
+    "survived": 24,
+    "noCoverage": 0,
+    "scorePercent": 95,
+    "durationSeconds": 310,
+    "unitTestsInRepo": "added 8 tests aimed at the survivors (braces, expansion cap, ** vs **/, classes, normalization, bounds)"
+  },
+  "notes": "Durations are wall-clock on a shared, loaded workstation. The 24 remaining survivors were sampled, not all inspected; several are loop-bound or fast-path variants that cannot change results. Equivalence was not proven for each."
+}

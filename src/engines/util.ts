@@ -52,9 +52,16 @@ export function errorDetail(stderr: string): string {
     .map((l) => l.trim())
     .filter(Boolean);
   if (lines.length === 0) return "no error output";
-  const pick = /^Traceback\b/.test(lines[0] ?? "")
-    ? (lines[lines.length - 1] ?? "")
-    : (lines[0] ?? "");
+  const first = lines[0] ?? "";
+  let pick = first;
+  // Runtime boilerplate headers say nothing: a Python "Traceback (most recent call last):" or Node's
+  // "node:internal/process/promises:394". Prefer the actual exception line, else the last line.
+  if (/^(Traceback\b|node:internal|file:\/\/|at\s)/.test(first)) {
+    pick =
+      lines.find((l) => /^[\w.$]*(Error|Exception)\b.*:/.test(l)) ??
+      lines[lines.length - 1] ??
+      first;
+  }
   return scrubPaths(pick).slice(0, 300);
 }
 

@@ -182,6 +182,31 @@ if (T) {
   p("Not measured in this run. No triage file was provided, so no false-positive rate is claimed.");
   p();
 }
+const mutPath = join(here, "results/mutation-self.json");
+if (existsSync(mutPath)) {
+  const M = JSON.parse(readFileSync(mutPath, "utf8"));
+  p("## Mutation testing (dogfood)");
+  p();
+  p(
+    `\`code-intel mutate\` run on this project's own most security-critical module, ${M.target}, using ${M.testCommand}. Engine: ${M.engine}.`,
+  );
+  p();
+  p("| | Mutants | Detected (killed + timeout) | Survived | Mutation score | Wall time |");
+  p("|---|---:|---:|---:|---:|---:|");
+  for (const [label, r] of [
+    ["Before", M.before],
+    ["After adding tests for the survivors", M.after],
+  ]) {
+    p(
+      `| ${label} | ${r.mutants} | ${r.killed + r.timeout} | ${r.survived} | ${r.scorePercent}% | ${Math.floor(r.durationSeconds / 60)} min ${r.durationSeconds % 60} s |`,
+    );
+  }
+  p();
+  p(
+    `A survivor is a behavior change the tests did not notice. The survivors of the first run pointed at specific untested behavior (nested braces, the exact brace-expansion cap, \`**\` versus \`**/\`, negated character classes), and tests written for those moved the score from ${M.before.scorePercent}% to ${M.after.scorePercent}% on the same ${M.after.mutants} mutants. ${M.notes}`,
+  );
+  p();
+}
 p("## What is not measured");
 p();
 p("- Windows and Linux timings (all numbers above are from one macOS machine).");

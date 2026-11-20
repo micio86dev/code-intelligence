@@ -18,3 +18,13 @@ Start with `code-intel doctor`. Add `--log-level debug` to any command for engin
 | `--staged`/`--since` "needs a git repository"                                            | Run inside a git repository, or use `--all`                                                                                                                            |
 | `git` hooks (for example a global pre-commit tool) interfere in scratch repos you create | Not caused by this tool; use `git commit --no-verify` or `git init --template=` for throwaway repos                                                                    |
 | Different results between two machines                                                   | Registry rulesets and vulnerability databases change over time; pin semgrep rules locally for reproducibility                                                          |
+
+## `mutate` fails immediately: `ts.parseConfigFileTextToJson is not a function`
+
+StrykerJS 10 rewrites the project's `tsconfig.json` using TypeScript's JavaScript API, which **TypeScript 7** (the native compiler) no longer ships. If your project uses TypeScript 7, tell Stryker not to touch a tsconfig, for example in `stryker.config.json`:
+
+```json
+{ "tsconfigFile": "tsconfig.stryker-unused.json" }
+```
+
+(any name that does not exist). This works when your tests run without compiling (Node's type stripping, Vitest, tsx...). This project's own `stryker.config.json` does exactly that.
