@@ -84,9 +84,37 @@ code-intel doctor
 
 Nothing is installed automatically.
 
-## Quick start
+## First test (10 minutes, nothing touches your real projects)
 
-New here? [docs/first-test.md](docs/first-test.md) is a ten-minute walkthrough with a throwaway project and fake defects.
+Plant three fake defects in a throwaway repository and see what a scan reports. Every command below was run as written against the published package.
+
+```bash
+# 1. a throwaway project: a lockfile pinning lodash 4.17.15, committed as the baseline
+mkdir /tmp/code-intel-demo && cd /tmp/code-intel-demo && git init -q .
+cat > package.json <<'JSON'
+{"name":"demo","version":"1.0.0","dependencies":{"lodash":"4.17.15"}}
+JSON
+cat > package-lock.json <<'JSON'
+{"name":"demo","version":"1.0.0","lockfileVersion":3,"requires":true,
+ "packages":{"":{"name":"demo","version":"1.0.0","dependencies":{"lodash":"4.17.15"}},
+ "node_modules/lodash":{"version":"4.17.15","resolved":"https://registry.npmjs.org/lodash/-/lodash-4.17.15.tgz"}}}
+JSON
+git add -A && git commit -q --no-verify -m base   # --no-verify skips any global pre-commit hook of yours
+
+# 2. plant the defects (a fake AWS-shaped key assembled at run time, an eval, a touched lockfile)
+KEY="AKIA$(printf 'QYLPMN5HHHFPZAM2')"
+printf 'const key = "%s";\nconst result = eval(req.query.expr);\n' "$KEY" > app.js
+echo "" >> package-lock.json
+
+# 3. scan
+code-intel scan; echo "exit code: $?"
+```
+
+Expected (versions and advisory ids change over time): gitleaks, semgrep and osv-scanner report findings, the key appears **once** as `[gitleaks +semgrep]` (its value is never printed), lodash's advisories appear on `package-lock.json`, the `eval` appears as a medium finding, and the result is `FAIL (exit 1)`.
+
+Two details that matter: do **not** use AWS's documented example key (`AKIAIOSFODNN7EXAMPLE`), because scanners ignore it on purpose and the scan would look broken; and dependency scanning only runs when a lockfile or manifest is part of the change, which is why the lockfile is touched. Clean up with `rm -rf /tmp/code-intel-demo`. More views (`--format json|sarif`, `--staged`, `--engines`) and the agent step are in [docs/first-test.md](https://github.com/micio86dev/code-intelligence/blob/main/docs/first-test.md).
+
+## Quick start
 
 ```bash
 cd your-repo

@@ -4,6 +4,12 @@ All notable changes to this project are documented here. Format based on [Keep a
 
 ## [Unreleased]
 
+## [0.1.1]
+
+### Changed
+
+- README: a ten-minute first-test walkthrough (throwaway project with fake defects), npm registry install instructions, and the note that `0.1.0` was published without provenance. Documentation only; no code change.
+
 ## [0.1.0]
 
 ### Added
